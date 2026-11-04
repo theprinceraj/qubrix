@@ -1,3 +1,8 @@
+import json
+import os
+from pathlib import Path
+
+
 def run_tests(func, tests):
     total = len(tests)
     if total < 1:
@@ -51,6 +56,13 @@ def run_tests(func, tests):
     return {**result, "total": total}
 
 
+def load_tests(path):
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+        print(f"Success, data at {path} loaded")
+    return data
+
+
 def add(a, b):
     return a + b
 
@@ -59,16 +71,7 @@ def multiply(a, b):
     return a * b
 
 
-add_tests = [
-    {"input": [2, 3], "expected": 5},
-    {"input": [4, 3], "expected": 9},
-    {"input": [11, 1], "expected": 12},
-    {"input": [1, 2, 3], "expected": 6},
-    {"input": ["hello", 5], "expected": 12},
-    {"input": "hello", "expected": 12},
-    {"inputs": [1, 9, 2], "expected": 18},
-    {"input": [1, 2]},
-]
+add_tests = load_tests(Path(__file__).parent / "data" / "add_tests.json")
 
 multiply_tests = [
     {"input": [4, 3], "expected": 12},
@@ -90,4 +93,4 @@ print(
     f"MULTIPLY: {results['passes']} passed, {results['fails']} failed, {results['errors']} errored, {results['bad_tests']} bad tests out of total {results['total']}\n"
 )
 
-run_tests(add, [])
+# run_tests(add, []) # Intentional Failure
