@@ -1,0 +1,42 @@
+INFO:__main__:LOADED add_tests.json: 8 cases
+ERROR:__main__:SKIPPED broken.json: Provided dataset 'broken.json' is not a valid JSON file
+INFO:__main__:LOADED multiply_tests.json: 7 cases
+WARNING:__main__:SKIPPED sort_tests.json: 'sort' function has invalid signature, expected only 2 arguments
+INFO:__main__:LOADED add_tests.json: 8 cases
+INFO:f1_functions:Test 1: PASS
+INFO:f1_functions:Test 2: FAIL - Input:4, 3 | Expected Out:9, Actual Out:7
+INFO:f1_functions:Test 3: PASS
+ERROR:f1_functions:Test 4: BAD TEST - ValueError: too many values to unpack (expected 2, got 3)
+ERROR:f1_functions:Test 5: ERROR - TypeError: can only concatenate str (not "int") to str
+ERROR:f1_functions:Test 6: BAD TEST - ValueError: too many values to unpack (expected 2)
+ERROR:f1_functions:Test 7: BAD TEST - KeyError: 'input'
+ERROR:f1_functions:Test 8: BAD TEST - KeyError: 'expected'
+ERROR:__main__:SKIPPED broken.json: Provided dataset 'broken.json' is not a valid JSON file
+INFO:__main__:LOADED multiply_tests.json: 7 cases
+INFO:f1_functions:Test 1: PASS
+INFO:f1_functions:Test 2: PASS
+INFO:f1_functions:Test 3: FAIL - Input:11, 1 | Expected Out:12, Actual Out:11
+ERROR:f1_functions:Test 4: ERROR - TypeError: can't multiply sequence by non-int of type 'str'
+ERROR:f1_functions:Test 5: BAD TEST - ValueError: too many values to unpack (expected 2)
+ERROR:f1_functions:Test 6: BAD TEST - ValueError: too many values to unpack (expected 2, got 3)
+ERROR:f1_functions:Test 7: BAD TEST - KeyError: 'expected'
+WARNING:__main__:SKIPPED sort_tests.json: 'sort' function has invalid signature, expected only 2 arguments
+INFO:__main__:LOADED add_tests.json: 8 cases
+INFO:f1_functions:Test 1: PASS
+INFO:f1_functions:Test 2: FAIL - Input:4, 3 | Expected Out:9, Actual Out:7
+INFO:f1_functions:Test 3: PASS
+ERROR:f1_functions:Test 4: BAD TEST - ValueError: too many values to unpack (expected 2, got 3)
+INFO:f1_functions:Test 5: ERROR - TypeError: can only concatenate str (not "int") to str
+ERROR:f1_functions:Test 6: BAD TEST - ValueError: too many values to unpack (expected 2)
+ERROR:f1_functions:Test 7: BAD TEST - KeyError: 'input'
+ERROR:f1_functions:Test 8: BAD TEST - KeyError: 'expected'
+ERROR:__main__:SKIPPED broken.json: Provided dataset 'broken.json' is not a valid JSON file
+INFO:__main__:LOADED multiply_tests.json: 7 cases
+INFO:f1_functions:Test 1: PASS
+INFO:f1_functions:Test 2: PASS
+INFO:f1_functions:Test 3: FAIL - Input:11, 1 | Expected Out:12, Actual Out:11
+INFO:f1_functions:Test 4: ERROR - TypeError: can't multiply sequence by non-int of type 'str'
+ERROR:f1_functions:Test 5: BAD TEST - ValueError: too many values to unpack (expected 2)
+ERROR:f1_functions:Test 6: BAD TEST - ValueError: too many values to unpack (expected 2, got 3)
+ERROR:f1_functions:Test 7: BAD TEST - KeyError: 'expected'
+WARNING:__main__:SKIPPED sort_tests.json: 'sort' function has invalid signature, expected only 2 arguments

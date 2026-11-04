@@ -1,6 +1,9 @@
 import json
+import logging
 from json.decoder import JSONDecodeError
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def run_tests(func, tests):
@@ -16,22 +19,22 @@ def run_tests(func, tests):
             a, b = test["input"]
             expected = test["expected"]
         except Exception as e:
-            print(f"Test {i}: BAD TEST - {type(e).__name__}: {e}")
+            logger.error(f"Test {i}: BAD TEST - {type(e).__name__}: {e}")
             bad_tests += 1
             continue
 
         try:
             res = func(a, b)
         except Exception as e:
-            print(f"Test {i}: ERROR - {type(e).__name__}: {e}")
+            logger.info(f"Test {i}: ERROR - {type(e).__name__}: {e}")
             errors += 1
             continue
 
         if res == expected:
-            print(f"Test {i}: PASS")
+            logger.info(f"Test {i}: PASS")
             passes += 1
         else:
-            print(
+            logger.info(
                 f"Test {i}: FAIL - Input:{', '.join(map(str, test['input']))} | Expected Out:{expected}, Actual Out:{res}"
             )
             fails += 1
@@ -79,6 +82,10 @@ def add(a, b):
 
 def multiply(a, b):
     return a * b
+
+
+def sort(a, b, c):
+    return a / b + c  # just for testing, hence anything being returned
 
 
 if __name__ == "__main__":
