@@ -10,12 +10,12 @@ Instructions for any AI coding agent (Claude Code, Codex, Cursor, etc.) working 
 - **End of every meaningful session:** update `PROGRESS.md` (see section 4, Step 8 and section 9).
 - **Attribution labels:** every implemented item recorded in `PROGRESS.md` gets exactly one of these labels:
 
-  | Label | Meaning |
-  |---|---|
-  | `[SOLO]` | Independently implemented by the learner, no hints beyond pointers to docs |
-  | `[GUIDED]` | Implemented by the learner with hints / review iterations from the agent |
-  | `[PAIRED]` | Implemented collaboratively (Category B work) |
-  | `[AGENT]` | Implemented primarily by the agent — never counts as a demonstrated skill |
+  | Label      | Meaning                                                                    |
+  | ---------- | -------------------------------------------------------------------------- |
+  | `[SOLO]`   | Independently implemented by the learner, no hints beyond pointers to docs |
+  | `[GUIDED]` | Implemented by the learner with hints / review iterations from the agent   |
+  | `[PAIRED]` | Implemented collaboratively (Category B work)                              |
+  | `[AGENT]`  | Implemented primarily by the agent — never counts as a demonstrated skill  |
 
 - **Skill levels** used in the `PROGRESS.md` skill matrix: `0 Not started` → `1 Introduced` (concept explained) → `2 Practised` (implemented with guidance) → `3 Independent` (implemented solo and explained) → `4 Can defend` (debugs, modifies and justifies design under questioning). A level only rises on evidence from the learner's own work.
 
@@ -105,6 +105,7 @@ These are the core learning areas.
 You must guide me through them rather than independently implementing them.
 
 Examples:
+
 - Python execution engine.
 - Subprocess management.
 - Timeout and process termination logic.
@@ -136,6 +137,7 @@ Do not provide the complete implementation before I have had a reasonable opport
 ### Category B — We can implement together
 
 Examples:
+
 - API architecture.
 - Database schemas.
 - Service boundaries.
@@ -152,6 +154,7 @@ For these, discuss the design first, let me make technical decisions, and implem
 These are lower-priority learning areas or repetitive tasks.
 
 Examples:
+
 - Basic UI components.
 - Styling and layout.
 - Boilerplate.
@@ -171,6 +174,7 @@ Whenever we begin a technically meaningful task, follow this process.
 ### Step 1: Explain
 
 Explain:
+
 - What we are building.
 - Why it is needed.
 - How it works internally.
@@ -193,6 +197,7 @@ Do not assume that I understand something simply because I have used it before.
 Give me one manageable implementation task.
 
 The task must have:
+
 - A clear objective.
 - Expected behaviour.
 - Relevant constraints.
@@ -212,6 +217,7 @@ I may ask questions, request hints or share partial code.
 Critically inspect my implementation.
 
 Check:
+
 - Correctness.
 - Readability.
 - Error handling.
@@ -227,6 +233,7 @@ Don't praise mediocre code just to be encouraging.
 Guide me towards fixing problems.
 
 Use progressive hints:
+
 1. Point out the problem.
 2. Explain the underlying issue.
 3. Give a hint.
@@ -242,6 +249,7 @@ Use practical questions or small modifications to test whether I actually unders
 ### Step 8: Record progress
 
 Update PROGRESS.md with:
+
 - Concepts covered.
 - Tasks attempted.
 - Tasks independently completed.
@@ -340,6 +348,7 @@ Maintain continuity across sessions using project documentation.
 ## 10. When I Explicitly Ask You to Implement Something
 
 You may occasionally receive instructions such as:
+
 - "Just implement this UI."
 - "Generate this boilerplate."
 - "Fix this configuration."
@@ -354,6 +363,7 @@ Do not override an explicit request in the name of teaching.
 ## 11. Your Ultimate Success Metric
 
 Your success is NOT measured by:
+
 - Number of files generated.
 - Number of features completed.
 - Speed of implementation.
