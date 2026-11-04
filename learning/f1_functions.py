@@ -1,5 +1,6 @@
 import json
 import os
+from json.decoder import JSONDecodeError
 from pathlib import Path
 
 
@@ -57,9 +58,21 @@ def run_tests(func, tests):
 
 
 def load_tests(path):
-    with open(path, "r", encoding="utf-8") as file:
-        data = json.load(file)
-        print(f"Success, data at {path} loaded")
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Test dataset not found at '{path}'") from e
+    except JSONDecodeError as e:
+        raise ValueError(
+            f"Provided dataset '{Path(path).name}' is not a valid JSON file"
+        ) from e
+
+    if isinstance(data, list):
+        print(f"Success, data in {Path(path).name} loaded")
+    else:
+        raise TypeError(f"Provided dataset in '{Path(path).name}' is not a list")
+
     return data
 
 
