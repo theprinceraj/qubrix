@@ -10,10 +10,10 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 
 | Field | Value |
 |---|---|
-| Current milestone | **F1 — Python foundations** (M0 setup mostly done) |
-| Active task | F1 complete ✅. Next: F2 Linux foundations in WSL Ubuntu (shell, filesystem, permissions, processes) |
+| Current milestone | **F1 — Python foundations ✅ finished 2026-11-05** (M0 setup mostly done) |
+| Active task | Next: F2 Linux foundations in WSL Ubuntu (shell, filesystem, permissions, processes). Not started; begin with a concept check |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
-| Last session | 2026-11-02 |
+| Last session | 2026-11-05 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
 
 ## Current assignment
@@ -28,7 +28,7 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 - **F1.5b ✅ 2026-11-04** `[GUIDED]`: dataset-to-function mapping derived from the file name (`add_tests.json` → `add`). Chose derivation for this project; explicit mapping (JSON) reserved for outside callers. Learner's checks, in order: name in module → function type → exactly two parameters (via `inspect.signature`), each with a `SKIPPED` line and `continue`. Totals accumulate from `run_tests` results only; cases of skipped files are not counted. Learner found the `getattr`-before-check bug themselves in the process (twice). Limit noted: names split on the first `_`, so `run_tests` can never be reached from a dataset file. `sort_tests.json` kept as a deliberate fixture.
 - **F1.5a ✅ 2026-11-04** `[GUIDED]`: `learning/f1_loop.py` loops over `data/*.json` with `Path.glob`, calls `load_tests`, catches the loader's documented exceptions in the loop and prints `SKIPPED <file>: <msg>` / `LOADED <file>: n cases`. Learner's reasoning: the loop owns the skip-or-stop policy; the loader only reports. Learner noticed glob order is alphabetical on Windows and that it doesn't matter since each line names its file. Added `if __name__ == "__main__":` guard in `f1_functions.py` so importing doesn't run the suites. First attempt had `"main"` (missing underscores): the guard silently never fired. Caught by the agent and fixed by the learner. Kept `broken.json` as a deliberate fixture and multiply's inline list as a second, comparable style.
 - **F1.4 ✅ 2026-11-04** `[GUIDED]`: `load_tests(path)` loads JSON via `with open(..., encoding="utf-8")` and `json.load`. Path built from `Path(__file__).parent` so it works from any folder. Three failure modes: missing file → `FileNotFoundError` with path; invalid JSON → `ValueError` naming the file, chained `from e` (decoder message has line/column but no filename); wrong shape → `TypeError`. Learner's design: loader raises, caller's loop decides; initially wrapped with a broad `except Exception` + `isinstance`, corrected to specific `except` clauses. Learner's explain-back on the wrapping: the constructor signature is a side issue, the real reason is the missing filename. Fixture-restore error in agent's test harness was caught and fixed (fixture re-synced from git).
-- **F1.3d ✅ 2026-11-04:** empty suite raises `ValueError("This test dataset is empty")` at the top of `run_tests`. Learner chose raise-inside over a caller warning; when challenged with "file #37 of 50 is empty", argued that the caller's loop should handle the exception. That's the right principle: the detector reports, the caller sets the policy. Pasted the exact traceback this time. Nit: `if total < 1` → `if not tests`. Pending explain-back: why validate before the loop.
+- **F1.3d ✅ 2026-11-04:** empty suite raises `ValueError("This test dataset is empty")` at the top of `run_tests`. Learner chose raise-inside over a caller warning; when challenged with "file #37 of 50 is empty", argued that the caller's loop should handle the exception. That's the right principle: the detector reports, the caller sets the policy. Pasted the exact traceback this time. Nit: `if total < 1` → `if not tests` (left as is). Explain-back closed 2026-11-05: validate before the loop because the check guards against wasted setup work (containers, resources in M1–M3) and against an empty dataset that signals a wrong path or broken export, which must not show as a clean run.
 
 **F1.2 — Functions: a reusable `run_tests(func, tests)`** (Category A, learner implements)
 - File: `learning/f1_functions.py` (new; keep F1.1 file as a record).
@@ -77,7 +77,7 @@ Qubrix is a sandboxed code-execution and evaluation platform: you submit code (w
 | # | Milestone | Main learning areas | Status |
 |---|---|---|---|
 | M0 | Project setup, baseline assessment, product scope | — | Mostly done |
-| F1 | Python foundations: data types, collections, functions, control flow, files, exceptions — all applied to tiny Qubrix-flavoured exercises | Python | **In progress** |
+| F1 | Python foundations: data types, collections, functions, control flow, files, exceptions — all applied to tiny Qubrix-flavoured exercises | Python | **Finished 2026-11-05** |
 | F2 | Linux foundations in WSL Ubuntu: shell, filesystem, permissions, processes | Linux | Not started |
 | F3 | Python for tooling: modules, virtual envs, type hints, first pytest tests | Python, testing | Not started |
 | M1 | Local Python execution engine (`subprocess`, timeouts, output capture, exit codes) | Python, processes, signals | Not started |
@@ -243,3 +243,10 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **Leftovers in code:** commented-out loop and redundant `, 0` in `sum()`; learner told to remove them.
 - **F1.3d** `[GUIDED]`: empty suite raises `ValueError`. Defended the design: the detector raises, the caller's loop decides whether to skip or stop. This links ahead to worker/queue retry policy (M5).
 - **Next:** answer "why validate before the loop", then git init, then F1.4 files: load test cases from a JSON file (connects to the "empty file" scenario).
+
+### 2026-11-05 — Session 5: F1 wrap-up
+- **Milestone:** F1 → closed.
+- **Explain-back (F1.3d):** question 1 was initially answered with a wrong premise (`None`). The function's `return` sits outside the loop, so without the guard an empty suite returns all zeros and the `assert` passes. Learner saw the guard fire (`ValueError`) and then reasoned correctly that an empty dataset can mean a wrong path, so a silent zero result is a false green.
+- **Habit gaps:** asked for a concrete reproduction before answering a "what happens" question; the learner needed the task number explained (F1.3c) before engaging with the references.
+- **Leftovers (learner decision):** commented-out "Old version" block in `run_tests` and the redundant `, 0` in `sum()` kept as-is at learner's request. Recorded here so it is not treated as an oversight later.
+- **Closed:** F1 finished. Next milestone F2 (Linux in WSL Ubuntu).
