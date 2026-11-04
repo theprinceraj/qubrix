@@ -1,5 +1,4 @@
 import json
-import os
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
@@ -68,9 +67,7 @@ def load_tests(path):
             f"Provided dataset '{Path(path).name}' is not a valid JSON file"
         ) from e
 
-    if isinstance(data, list):
-        print(f"Success, data in {Path(path).name} loaded")
-    else:
+    if not isinstance(data, list):
         raise TypeError(f"Provided dataset in '{Path(path).name}' is not a list")
 
     return data
@@ -84,26 +81,26 @@ def multiply(a, b):
     return a * b
 
 
-add_tests = load_tests(Path(__file__).parent / "data" / "add_tests.json")
+if __name__ == "__main__":
+    add_tests = load_tests(Path(__file__).parent / "data" / "add_tests.json")
 
-multiply_tests = [
-    {"input": [4, 3], "expected": 12},
-    {"input": [3, 9], "expected": 27},
-    {"input": [11, 1], "expected": 12},
-    {"input": ["hello", "bro"], "expected": 12},
-    {"input": "hello", "expected": 12},
-    {"input": [1, 2, 3], "expected": 6},
-    {"input": [1, 2]},
-]
+    multiply_tests = [
+        {"input": [4, 3], "expected": 12},
+        {"input": [3, 9], "expected": 27},
+        {"input": [11, 1], "expected": 12},
+        {"input": ["hello", "bro"], "expected": 12},
+        {"input": "hello", "expected": 12},
+        {"input": [1, 2, 3], "expected": 6},
+        {"input": [1, 2]},
+    ]
+    results = run_tests(add, add_tests)
+    print(
+        f"ADD: {results['passes']} passed, {results['fails']} failed, {results['errors']} errored, {results['bad_tests']} bad tests out of total {results['total']}\n"
+    )
 
-results = run_tests(add, add_tests)
-print(
-    f"ADD: {results['passes']} passed, {results['fails']} failed, {results['errors']} errored, {results['bad_tests']} bad tests out of total {results['total']}\n"
-)
+    results = run_tests(multiply, multiply_tests)
+    print(
+        f"MULTIPLY: {results['passes']} passed, {results['fails']} failed, {results['errors']} errored, {results['bad_tests']} bad tests out of total {results['total']}\n"
+    )
 
-results = run_tests(multiply, multiply_tests)
-print(
-    f"MULTIPLY: {results['passes']} passed, {results['fails']} failed, {results['errors']} errored, {results['bad_tests']} bad tests out of total {results['total']}\n"
-)
-
-# run_tests(add, []) # Intentional Failure
+    # run_tests(add, []) # Intentional Failure
