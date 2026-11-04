@@ -11,7 +11,7 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **F1 — Python foundations ✅ finished 2026-11-05** (M0 setup mostly done) |
-| Active task | Next: F2 Linux foundations in WSL Ubuntu (shell, filesystem, permissions, processes). Not started; begin with a concept check |
+| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask. Next: processes and signals (learner has SIGTERM vs SIGKILL right, not yet practised); then sandbox threat-model basics (root, mounts, isolation) |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
 | Last session | 2026-11-05 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
@@ -110,8 +110,9 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 ### 2. Linux & systems engineering
 | Skill | Level | Evidence |
 |---|---|---|
-| Filesystem & permissions | 0 | Ubuntu installed 2026-11-02; not practised yet |
-| Processes & signals | 0 | Self-report |
+| Filesystem & permissions | 1 | 2026-11-05: explained `/mnt/d` as a Windows drive bridge, not a copy; Windows-mounted files show as `777` (not a real isolation boundary). Read `ls -l` and octal modes; `chmod 640` applied and explained (`[GUIDED]`, learner predicted most of it). Umask worked out with hints (`0022`→`644`, `077`→`600`). Gap: `chmod` of `other` at digit level was first described loosely; not yet practised solo |
+| Processes & signals | 1 | 2026-11-05: explained SIGTERM (catchable, clean exit) vs SIGKILL (uncatchable) and why a sandbox needs SIGKILL as fallback. Not practised in a terminal yet |
+| Streams (stdout/stderr) | 2 | 2026-11-05 `[GUIDED]`: needed three hints and a concrete `ls` demo to separate stdout from stderr; the terminal is the default destination, not a stream. Predicted and verified `out.txt` / `err.txt` contents |
 | Memory & resource management | 0 | Self-report |
 | Networking & ports | 0 | Self-report |
 | SSH | 0 | Self-report |
@@ -250,3 +251,15 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **Habit gaps:** asked for a concrete reproduction before answering a "what happens" question; the learner needed the task number explained (F1.3c) before engaging with the references.
 - **Leftovers (learner decision):** commented-out "Old version" block in `run_tests` and the redundant `, 0` in `sum()` kept as-is at learner's request. Recorded here so it is not treated as an oversight later.
 - **Closed:** F1 finished. Next milestone F2 (Linux in WSL Ubuntu).
+
+### 2026-11-05 — Session 6: F2 concept check (Linux foundations)
+- **Milestone:** F2 started. No code written; all Category A checks were learner answers.
+- **Concepts covered:** `/mnt/d` as a Windows drive bridge; stdout vs stderr with `>` and `2>`; `ls -l` permission strings and octal (`r`=4, `w`=2, `x`=1); `chmod 640`; `umask` as a mask of rights to remove (`0022`→`644`, `077`→`600`); SIGTERM vs SIGKILL; root bypasses file permissions, so untrusted code must not run as root; layered defence (non-root, restricted mounts, resource limits).
+- **Results:** learner got stream behaviour and octal decoding after hints; the `/mnt/d` permission trap (`777`) was explained, and the learner accepted it.
+- **Learner misconceptions corrected:**
+  - Read "logging" as a separate stream in a shell redirect; it's Python's default destination for stderr.
+  - Treated `umask 077` as "does nothing" and tried subtracting digits (`6-7 = -1`). Fixed by working with rights (remove r/w/x), not subtraction.
+  - Gave the default mode without showing the `umask` calculation; needed the table.
+  - Claimed a chmod changed the "group" when it only changed "other" (corrected).
+- **Habit gaps:** answers guessed or skipped (`"no idea"`) before attempting predictions; expects to be told answers rather than reasoning from the hint. Keep requiring a prediction before each command.
+- **Open for next session:** practise processes (`ps`, `kill`, `kill -9` on a running script, `$?` exit codes) with a prediction first; then the root/mount/isolation threat model for M3.
