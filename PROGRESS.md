@@ -11,7 +11,7 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **F1 — Python foundations** (M0 setup mostly done) |
-| Active task | F1.3 exceptions. F1.3a ✅ F1.3b ✅. Next: F1.3c, count PASS/FAIL/ERROR/BAD TEST separately in the summary |
+| Active task | F1.3 exceptions ✅ (a–d). Pending: explain-back "why validate before the loop". Next: git init, then F1.4 files (load test cases from JSON) |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
 | Last session | 2026-11-02 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
@@ -22,8 +22,8 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 - Pre-check done by experiment in `learning/f1_break.py`. Learner classified: `"inputs"` typo / `"input": 5` / missing `"expected"` are the test's fault; `div` by 0 is the function's fault. Reads tracebacks bottom-up with guidance.
 - **F1.3a ✅ 2026-11-02:** `try` wraps only `func(a, b)`. Prints `Test 1: ERROR - ZeroDivisionError: division by zero`, then `continue`, so later tests still run. Needed hint level 4 for `type(e).__name__` / `{e}`. Nit: uses `e.__str__()` where `{e}` is idiomatic.
 - **F1.3b ✅ 2026-11-02:** a second `try` reads `input` and `expected` *before* calling `func`, and prints `BAD TEST - <Type>: <msg>`, then `continue`. Renamed `res` to `expected` (one variable, one meaning). Learned that Python has no block scope (compared it to JS `var` vs `let`). Experiment without `continue` showed a broken test graded with leftover values from the previous test, which gave a false PASS (`2/2 passed`). Learner explained it in their own words: the failed assignment never happened, so the old values stayed.
-- **F1.3c (next):** the summary should count ERROR and BAD TEST separately; right now they only lower the pass count. Consider flagging an empty suite.
-- Later: count errors separately in the summary; an empty suite should be flagged.
+- **F1.3c ✅ 2026-11-04:** `run_tests` counts passes/fails/errors/bad_tests separately and returns a dict. Test data now hits every status (missing key, misspelled key, 3 inputs, string instead of list, crashing `"hello" + 5`). First caller unpacked `.values()` positionally, which threw away the dict's safety; learner explained that reordering keys would silently swap counts ("worse for code that judges code") and switched to key access. Added `assert sum(result.values()) == total`. Learner explained why summing the dict covers future statuses automatically. Deliberate-break test of the assert: learner says it was done; **agent did not see the output**.
+- **F1.3d ✅ 2026-11-04:** empty suite raises `ValueError("This test dataset is empty")` at the top of `run_tests`. Learner chose raise-inside over a caller warning; when challenged with "file #37 of 50 is empty", argued that the caller's loop should handle the exception. That's the right principle: the detector reports, the caller sets the policy. Pasted the exact traceback this time. Nit: `if total < 1` → `if not tests`. Pending explain-back: why validate before the loop.
 
 **F1.2 — Functions: a reusable `run_tests(func, tests)`** (Category A, learner implements)
 - File: `learning/f1_functions.py` (new; keep F1.1 file as a record).
@@ -98,7 +98,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Type hints & clean code | 0 | Self-report |
 | Async programming | 0 | Self-report |
 | Processes, subprocesses & concurrency | 0 | Self-report |
-| Error handling & logging | 2 | 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. No logging yet |
+| Error handling & logging | 2 | 2026-11-04: F1.3c `[GUIDED]`: invariant check with `assert` (not yet seen to fire); knows `python -O` strips asserts (told, not practised). 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. No logging yet |
 | Packaging & dependency management | 0 | Self-report |
 | Testing & debugging | 0 | Self-report |
 
@@ -156,6 +156,8 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 |---|---|---|---|---|
 | 2026-11-01 | `AGENTS.md`, `PROGRESS.md`, `CLAUDE.md` | C | `[AGENT]` | Working agreement and progress tracker set up |
 | 2026-11-02 | `learning/f1_collections.py` — F1.1 add() test loop | A | `[GUIDED]` | Correct on first try. Only hint given: index `input` by position. Used `len(tests)` instead of hard-coding 3 |
+| 2026-11-04 | `learning/f1_functions.py` — F1.3d raise `ValueError` on empty suite | A | `[GUIDED]` | Correct first try given the constraints (top of function, pick a concrete exception type) |
+| 2026-11-04 | `learning/f1_functions.py` — F1.3c per-status counts, dict return, total invariant assert | A | `[GUIDED]` | Counting + test data correct first try. Needed a thought-experiment prompt to see the `.values()` unpacking flaw; `sum()` after a docs pointer |
 | 2026-11-02 | `learning/f1_functions.py` — F1.3b validate test data first, BAD TEST status | A | `[GUIDED]` | Correct on first attempt, given the constraint "read both fields before calling func" and the hint "second try + variable" |
 | 2026-11-02 | `learning/f1_functions.py` — F1.3a catch function exceptions as ERROR, continue run | A | `[GUIDED]` | Hint level 4 for formatting the exception. First defended `div` against 0 instead of simulating buggy submitted code |
 | 2026-11-02 | `learning/f1_functions.py` — F1.2 reusable `run_tests(func, tests)` + `multiply` suite | A | `[GUIDED]` | Hints needed for the set/dict return bug and for the unused `func`. Learner chose the tuple return |
@@ -168,6 +170,8 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 |---|---|---|---|---|
 | 2026-11-02 | Python / enumerate | Treated an `enumerate` item as the dict and indexed it with `test[i]["input"]`, which gave `TypeError: 'int' object is not subscriptable` | Debugged it with `print(test, type(test))` and switched to `test[1]`. Mental model still wrong: thought the tuple held two test dicts | 3 (pointed to unpacking docs) |
 | 2026-11-02 | Python / types | Returned `{total, passes}` (a set, so unordered and duplicates collapse), which printed `3/2 passed`. Then returned `{total: total, passes: passes}` (unquoted keys, so the values became keys), which gave `ValueError` when all tests passed | Ran the experiments, saw the error, switched to a tuple return. Still thought dict unpacking gives values (it gives keys) | 3 |
+| 2026-11-04 | Design | Returned a dict, then unpacked it with `a, b, ... = result.values()`, which depends on key order again and would silently swap counts | Thought experiment ("what if someone reorders the keys?"); learner explained the silent swap and switched to `result["passes"]` | 2 |
+| 2026-11-04 | Precision | Said a missed counter makes `total` too big; actually `total` is `len(tests)` and the counter sum falls short | Corrected by agent | 1 |
 | 2026-11-02 | Python / exceptions | Printed `e.__doc__` (the generic class docstring), then tried random dunders. One `except` block crashed with `AttributeError`, which killed the run anyway | Hints: a method reference vs a call (`__str__` vs `{e}`), and the name lives on the class (`type(e).__name__`). Learned that the error handler itself must not fail | 4 |
 | 2026-11-02 | Tooling | Zed Ctrl+Shift+R reran the old `f1_collections.py`, so the output didn't match the code | Learner noticed it themselves; now runs from the terminal | 1 |
 | 2026-11-02 | Design | Kept a manual `i` counter while also using `enumerate`, which duplicates the counter | Learner removed manual `i` and used `for i, test in enumerate(tests, 1)` | 2 |
@@ -224,3 +228,13 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **F1.3b** `[GUIDED]`: BAD TEST status, test validated before the function runs. Learned that Python has no block scope. The experiment showed how a missing `continue` grades a test with stale inputs and gives a false PASS. Learner reached the insight themselves ("it held values of previous test because this test didn't allot it the new values").
 - **Habit gaps:** skipped a requested prediction before running. Gives half-answers to "why" questions, so prompt for the mechanism, not just the effect.
 - **Next:** F1.3c counts per status in the summary.
+
+### 2026-11-04 — Session 4: F1.3c per-status counts
+- **Milestone:** F1
+- **Implemented:** F1.3c `[GUIDED]` (see Current assignment).
+- **Concepts:** why an evaluator must separate FAIL/ERROR/BAD TEST (a broken benchmark must not count against the model); invariants and `assert`; `-O` strips asserts, so production guards use `if ...: raise`; `sum()`; don't keep commented-out code.
+- **Explain-back:** good on the silent count swap and on why summing the dict covers new statuses.
+- **Habit gaps:** skipped the requested "break it on purpose and paste the output" step (said it was done earlier). Ask for failure output of every new guard. Wording about which number goes wrong was imprecise at first.
+- **Leftovers in code:** commented-out loop and redundant `, 0` in `sum()`; learner told to remove them.
+- **F1.3d** `[GUIDED]`: empty suite raises `ValueError`. Defended the design: the detector raises, the caller's loop decides whether to skip or stop. This links ahead to worker/queue retry policy (M5).
+- **Next:** answer "why validate before the loop", then git init, then F1.4 files: load test cases from a JSON file (connects to the "empty file" scenario).
