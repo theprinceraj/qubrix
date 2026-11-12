@@ -11,7 +11,7 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **F1 — Python foundations ✅ finished 2026-11-05** (M0 setup mostly done) |
-| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Next: sandbox threat-model basics (root, mounts, isolation) |
+| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Threat model ✅ and Bash part 1 ✅ (session 8: variables, quotes, shebang, chmod). Next: Bash part 2: `$1`, `$?` in a script, `run.sh <file.py>` |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
 | Last session | 2026-11-07 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
@@ -110,13 +110,13 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 ### 2. Linux & systems engineering
 | Skill | Level | Evidence |
 |---|---|---|
-| Filesystem & permissions | 1 | 2026-11-05: explained `/mnt/d` as a Windows drive bridge, not a copy; Windows-mounted files show as `777` (not a real isolation boundary). Read `ls -l` and octal modes; `chmod 640` applied and explained (`[GUIDED]`, learner predicted most of it). Umask worked out with hints (`0022`→`644`, `077`→`600`). Gap: `chmod` of `other` at digit level was first described loosely; not yet practised solo |
+| Filesystem & permissions | 2 | 2026-11-12 `[GUIDED]`: on a real Linux FS, predicted `644` → no exec → Permission denied before running; saw `/mnt/d` makes every file `777` and that `mv` keeps the mode. Octal vs symbolic `chmod` (octal overwrites all 9 bits). Mixed up `o` (other) with owner again; fixed it after seeing the output. Still needs the chart. 2026-11-05: explained `/mnt/d` as a Windows drive bridge, not a copy; Windows-mounted files show as `777` (not a real isolation boundary). Read `ls -l` and octal modes; `chmod 640` applied and explained (`[GUIDED]`, learner predicted most of it). Umask worked out with hints (`0022`→`644`, `077`→`600`). Gap: `chmod` of `other` at digit level was first described loosely; not yet practised solo |
 | Processes & signals | 2 | 2026-11-07 `[GUIDED]`: found PIDs with `ps -ef`, killed `sleep` with `kill` and `kill -9`, read `$?`. Derived 128 + signal number with a subtraction hint and correctly predicted 137. Classified 0, 1, 137, 143 correctly after being told the below/above 128 rule. Gaps: `$?` is per shell and per last command (ran it in the wrong terminal, and twice without `echo`); catching or ignoring SIGTERM not practised. 2026-11-05: explained SIGTERM (catchable, clean exit) vs SIGKILL (uncatchable) and why a sandbox needs SIGKILL as fallback |
 | Streams (stdout/stderr) | 2 | 2026-11-05 `[GUIDED]`: needed three hints and a concrete `ls` demo to separate stdout from stderr; the terminal is the default destination, not a stream. Predicted and verified `out.txt` / `err.txt` contents |
 | Memory & resource management | 0 | Self-report |
 | Networking & ports | 0 | Self-report |
 | SSH | 0 | Self-report |
-| Shell commands & Bash scripting | 0 | Self-report |
+| Shell commands & Bash scripting | 1 | 2026-11-12: shebang, `./` vs `bash`, variables, no spaces around `=`, single vs double quotes (one wrong prediction), `VAR=x cmd` expands before the command runs (explained with a hint). Ran an agent-given 2-line script; has not written a script yet |
 | System-level debugging | 0 | Self-report |
 
 ### 3. Docker & infrastructure
@@ -134,7 +134,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Skill | Level | Evidence |
 |---|---|---|
 | Process creation & lifecycle | 0 | Self-report |
-| Safe execution of untrusted code | 0 | Self-report |
+| Safe execution of untrusted code | 1 | 2026-11-12: threat model exercise. Listed 5 threats unprompted (CPU, RAM, disk, outbound network, LAN), found result tampering with a hint, mapped threats to defences, and found the network gap. Explained that non-root protects the other defences. Gaps: wall-clock vs CPU limit, hidden vs read-only tests, in-process tampering (all told, not yet practised) |
 | Execution timeouts | 0 | Self-report |
 | Resource limits | 0 | Self-report |
 | Output capture | 0 | Self-report |
@@ -279,3 +279,23 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **Explain-back (exit 0 in grace period):** learner reported "time limit exceeded" and said the exit status alone is not reliable, without a hint. Agent added: the status is chosen by untrusted code, so the engine's own `timed_out` record is checked first, and in M4 exit 0 must not count as passing tests.
 - **Signals topic closed for F2.** Not yet practised: child processes outliving a killed parent (M2), Python `subprocess` return codes (M1).
 - **Next:** threat model for M3: list what a submission could do when run as a normal user with no sandbox.
+
+### 2026-11-12 — Session 8: F2 threat model
+- **Milestone:** F2. Thinking exercise only, no code.
+- **Learner's threat list (unprompted):** runs forever, eats RAM, fills disk (marked accidental), outbound network/DoS, attacking LAN/other devices. **Missed until hinted:** damage to existing files and result tampering. With the hint "what file decides whether it passed", the learner named result manipulation.
+- **Agent added:** `/mnt/d` = real Windows D: drive (`777`), so `rmtree` hits real files; in-process grading (F1 `run_tests`) lets the candidate change `tests` in memory, which is why M1 uses a separate process; real LLM agents have edited tests instead of fixing code.
+- **Defence mapping (threats a–g vs non-root / restricted mounts / resource limits):** a–c resource limits ✔; f restricted mounts ✔; g "restricted file visibility" (partly right). For d/e the learner named a **fourth defence (network restrictions)** instead of answering "none of the three". Right conclusion, though the question wasn't answered as asked. **Skipped the question about non-root.**
+- **Agent corrections:** a CPU-time limit doesn't stop `time.sleep` forever, so a wall-clock timeout is needed too; a file-size limit ≠ a total disk quota; mounting tests read-only still lets the submission *read* expected values; in-process tampering isn't stopped by mounts.
+- **Habit gap:** "who gets hurt" given as one blanket answer, not per item.
+- **Non-root:** first answer was "can't edit system files" (correct but shallow; agent added `/etc/shadow`, a backdoor admin account). After a level-3 hint (a normal user can lower a hard rlimit but never raise it; mounts and network rules need root), the learner concluded that root makes the other defences "toothless" because it can change them, and that non-root keeps the process inside the sandbox's defined limits. Correct principle. Skipped the requested one-line-per-defence answer again.
+- **Agent added:** defence in depth: each layer protects another one, so non-root is what keeps limits, mounts and network rules in force. In Docker, root inside the container is still dangerous (M3: `--user`).
+- **Threat model topic closed for F2.** Carry into M3: map each Docker flag to a threat a–g; tests invisible to the submission; wall-clock timeout + CPU limit; total disk quota.
+- **Next:** Bash basics (variables, pipes, `$?` in a script, a first small script). Shell scripting is the last F2 area still at 0.
+
+### 2026-11-12 — Session 8 (cont.): Bash basics, part 1
+- **Pre-check:** `lang = python` → error ✔ (reason vague; agent explained that the first word is the command); `echo 'Result: $lang'` predicted `Result: python` ✘ (single quotes are literal; confirmed by experiment); `./hello.sh` without chmod → Permission denied (right for a Linux filesystem, wrong on `/mnt/d`).
+- **Discovered by accident:** wrote `lang=python echo "Result: $lang"` on one line and got `Result:`. With the hint "expansion happens before the command runs", the learner explained that `lang` was unset at expansion time. Agent added: `VAR=x cmd` sets the variable only in that command's environment (links to `subprocess` `env=` in M1).
+- **hello.sh on `/mnt/d`:** created as `-rwxrwxrwx`, so it ran without `chmod`. **Skipped the requested prediction** (again) and the `chmod` steps; created the file in the repo root instead of `learning/f2/`.
+- **Moved to `~`:** `mv` across filesystems kept `777` (now real, so world-writable; agent explained the risk). Forgot the octal chart; given r=4/w=2/x=1 again. Then predicted `644` → `rw-r--r--` and `Permission denied` **before running** ✔ (reason was missing the "owner has no x" mechanism).
+- **chmod mistakes:** `rwxr-xr-x` → `755` ✔. "Execute for owner only" answered `chmod 755` ✘, then self-corrected to `744` (right only from 644; agent showed `664` → `744` silently drops group write, which is why symbolic mode exists). Symbolic attempt `chmod o+x` gave `-rw-rw-r-x`: **`o` read as owner** (same owner/other confusion as session 6). The prediction vs. output diff exposed it. Fixed with `chmod o-x` + `chmod u+x` → `-rwxrw-r--` ✔. Bonus (`chmod o-x,u+x` in one command) not tried.
+- **Next:** Bash part 2: script arguments (`$1`), `$?` inside a script, a tiny runner script `run.sh <file.py>` that reports the exit status.
