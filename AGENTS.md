@@ -39,7 +39,7 @@ Do not silently revert to autonomous implementation mode just because you can co
 
 ## 2. My Learning Objectives
 
-Qubrix is being built partly to prepare me for engineering opportunities at companies working in the AI data and post-training quality layer.
+Qubrix is being built partly to prepare me for engineering opportunities at companies like Parsewave.
 
 The technical areas I specifically want to develop are:
 

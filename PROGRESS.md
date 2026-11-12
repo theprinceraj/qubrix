@@ -11,9 +11,9 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **F1 — Python foundations ✅ finished 2026-11-05** (M0 setup mostly done) |
-| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask. Next: processes and signals (learner has SIGTERM vs SIGKILL right, not yet practised); then sandbox threat-model basics (root, mounts, isolation) |
+| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Next: sandbox threat-model basics (root, mounts, isolation) |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
-| Last session | 2026-11-05 |
+| Last session | 2026-11-07 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
 
 ## Current assignment
@@ -78,7 +78,7 @@ Qubrix is a sandboxed code-execution and evaluation platform: you submit code (w
 |---|---|---|---|
 | M0 | Project setup, baseline assessment, product scope | — | Mostly done |
 | F1 | Python foundations: data types, collections, functions, control flow, files, exceptions — all applied to tiny Qubrix-flavoured exercises | Python | **Finished 2026-11-05** |
-| F2 | Linux foundations in WSL Ubuntu: shell, filesystem, permissions, processes | Linux | Not started |
+| F2 | Linux foundations in WSL Ubuntu: shell, filesystem, permissions, processes | Linux | In progress |
 | F3 | Python for tooling: modules, virtual envs, type hints, first pytest tests | Python, testing | Not started |
 | M1 | Local Python execution engine (`subprocess`, timeouts, output capture, exit codes) | Python, processes, signals | Not started |
 | M2 | Resource limits & process termination on Linux (rlimits, process groups, kill semantics) | Linux, systems | Not started |
@@ -111,7 +111,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Skill | Level | Evidence |
 |---|---|---|
 | Filesystem & permissions | 1 | 2026-11-05: explained `/mnt/d` as a Windows drive bridge, not a copy; Windows-mounted files show as `777` (not a real isolation boundary). Read `ls -l` and octal modes; `chmod 640` applied and explained (`[GUIDED]`, learner predicted most of it). Umask worked out with hints (`0022`→`644`, `077`→`600`). Gap: `chmod` of `other` at digit level was first described loosely; not yet practised solo |
-| Processes & signals | 1 | 2026-11-05: explained SIGTERM (catchable, clean exit) vs SIGKILL (uncatchable) and why a sandbox needs SIGKILL as fallback. Not practised in a terminal yet |
+| Processes & signals | 2 | 2026-11-07 `[GUIDED]`: found PIDs with `ps -ef`, killed `sleep` with `kill` and `kill -9`, read `$?`. Derived 128 + signal number with a subtraction hint and correctly predicted 137. Classified 0, 1, 137, 143 correctly after being told the below/above 128 rule. Gaps: `$?` is per shell and per last command (ran it in the wrong terminal, and twice without `echo`); catching or ignoring SIGTERM not practised. 2026-11-05: explained SIGTERM (catchable, clean exit) vs SIGKILL (uncatchable) and why a sandbox needs SIGKILL as fallback |
 | Streams (stdout/stderr) | 2 | 2026-11-05 `[GUIDED]`: needed three hints and a concrete `ls` demo to separate stdout from stderr; the terminal is the default destination, not a stream. Predicted and verified `out.txt` / `err.txt` contents |
 | Memory & resource management | 0 | Self-report |
 | Networking & ports | 0 | Self-report |
@@ -161,6 +161,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Date | Item | Category (A/B/C) | Attribution | Notes |
 |---|---|---|---|---|
 | 2026-11-01 | `AGENTS.md`, `PROGRESS.md`, `CLAUDE.md` | C | `[AGENT]` | Working agreement and progress tracker set up |
+| 2026-11-07 | `learning/f2/f2_ignore_term.py` — catches SIGTERM with a handler, then sleeps | A | `[GUIDED]` | Agent named the APIs and pointed to docs. Learner chose a custom handler over the suggested `SIG_IGN`. Survived `kill`, died to `kill -9` with status 137 |
 | 2026-11-02 | `learning/f1_collections.py` — F1.1 add() test loop | A | `[GUIDED]` | Correct on first try. Only hint given: index `input` by position. Used `len(tests)` instead of hard-coding 3 |
 | 2026-11-04 | `learning/f1_functions.py` — F1.3d raise `ValueError` on empty suite | A | `[GUIDED]` | Correct first try given the constraints (top of function, pick a concrete exception type) |
 | 2026-11-04 | `learning/f1_functions.py` — F1.3c per-status counts, dict return, total invariant assert | A | `[GUIDED]` | Counting + test data correct first try. Needed a thought-experiment prompt to see the `.values()` unpacking flaw; `sum()` after a docs pointer |
@@ -263,3 +264,18 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
   - Claimed a chmod changed the "group" when it only changed "other" (corrected).
 - **Habit gaps:** answers guessed or skipped (`"no idea"`) before attempting predictions; expects to be told answers rather than reasoning from the hint. Keep requiring a prediction before each command.
 - **Open for next session:** practise processes (`ps`, `kill`, `kill -9` on a running script, `$?` exit codes) with a prediction first; then the root/mount/isolation threat model for M3.
+
+### 2026-11-07 — Session 7: F2 exit statuses after signals
+- **Milestone:** F2. Terminal experiments only, no project code written.
+- **Concepts covered:** PID and parent PID in `ps -ef`; `grep` matching itself; `kill` (SIGTERM) gives `Terminated` and 143; `kill -9` (SIGKILL) gives `Killed` and 137; rule of 128 + signal number; the shell prints the death message, not the process; `$?` belongs to the last command in that shell.
+- **Results:** predicted 137 before seeing it, after the agent reduced the rule to a subtraction. First two prediction prompts answered "no idea". Filled in the status table once the below/above 128 rule was given.
+- **Mistakes corrected:** ran `$?` without `echo` (`0: command not found`, `137: command not found`; the second time was after the explanation, so not yet a habit); read SIGKILL's number 9 as the `$?` result; ran `echo $?` in Terminal B and got `kill`'s own 0.
+- **Agent correction:** the first table task assumed the below/above 128 rule without having taught it; the learner said so and the agent explained it. Told that above 128 is a convention, since a program can exit with 137 by itself (not yet tested; revisit with `subprocess` in M1).
+- **Explain-back:** treating every non-zero status as "failed its tests" would falsely fail a correct solution killed by a worker restart. Correct on the effect; the learner has not yet said what the evaluator should do instead.
+- **Who sent the signal:** learner said a timeout kill and an infrastructure kill must score differently, and that the engine should track who sent the signal. Agent added: the parent can't learn the sender, so the engine records its own kill (`timed_out`), and "the code is correct" overclaims for an outside kill (the OOM killer can be caused by the code), so that result is an infrastructure error.
+- **`f2_ignore_term.py`** `[GUIDED]`: predicted handler message on `kill`, and SIGKILL bypassing the handler. First predicted 143 for `kill -9`, then corrected it to 137 using 128 + 9 without a further hint. First run killed PID 326, the parent shell (PPID column), not the program: bash ignored SIGTERM and died to SIGKILL. Rerun used the right PID and matched the predictions. Skipped the second `ps` check; survival shown by the `IGNORED signal 15` line and by `kill -9` still reaching the process.
+- **Told, not observed:** the first run's program most likely died from SIGHUP when its terminal closed.
+- **Explain-back (timeout design):** SIGTERM alone lets a handler hold resources; immediate SIGKILL denies the program a chance to save state; picked SIGTERM, grace period, then SIGKILL, with sound reasoning. Precision fix: `f2_ignore_term.py` would end by itself after 300 s, so "never ends" only applies to a program that loops. Agent added: the grace period gives untrusted code extra run time, so it must be short and bounded.
+- **Explain-back (exit 0 in grace period):** learner reported "time limit exceeded" and said the exit status alone is not reliable, without a hint. Agent added: the status is chosen by untrusted code, so the engine's own `timed_out` record is checked first, and in M4 exit 0 must not count as passing tests.
+- **Signals topic closed for F2.** Not yet practised: child processes outliving a killed parent (M2), Python `subprocess` return codes (M1).
+- **Next:** threat model for M3: list what a submission could do when run as a normal user with no sandbox.
