@@ -11,9 +11,9 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **F1 — Python foundations ✅ finished 2026-11-05** (M0 setup mostly done) |
-| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Threat model ✅ and Bash part 1 ✅ (session 8: variables, quotes, shebang, chmod). Next: Bash part 2: `$1`, `$?` in a script, `run.sh <file.py>` |
+| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Threat model ✅ and Bash part 1 ✅ (session 8: variables, quotes, shebang, chmod). Bash part 2 step 1 ✅ (session 9: `$0`/`$1`/`$#`, `args.sh`). Shebang/interpreter model ✅ (`#!/bin/cat` experiment). Next: Task 2 `run.sh <file.py>` (`$?` in a script) |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
-| Last session | 2026-11-07 |
+| Last session | 2026-11-15 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
 
 ## Current assignment
@@ -116,7 +116,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Memory & resource management | 0 | Self-report |
 | Networking & ports | 0 | Self-report |
 | SSH | 0 | Self-report |
-| Shell commands & Bash scripting | 1 | 2026-11-12: shebang, `./` vs `bash`, variables, no spaces around `=`, single vs double quotes (one wrong prediction), `VAR=x cmd` expands before the command runs (explained with a hint). Ran an agent-given 2-line script; has not written a script yet |
+| Shell commands & Bash scripting | 2 | 2026-11-15 `[GUIDED]`: wrote first script (`~/f2/args.sh`) using `$0`, `$1`, `$#`; predicted all 4 cases correctly beforehand, including `"hello world"` → 1 argument. `chmod u+x` correct (no u/o mix-up). Used `bash -x` (agent-suggested). Gap: why `#!/usr/bin/env` alone loops forever needed a full reveal; `env` runs its argument as a command (learned by experiment). 2026-11-12: shebang, `./` vs `bash`, variables, no spaces around `=`, single vs double quotes (one wrong prediction), `VAR=x cmd` expands before the command runs (explained with a hint). Ran an agent-given 2-line script; has not written a script yet |
 | System-level debugging | 0 | Self-report |
 
 ### 3. Docker & infrastructure
@@ -161,6 +161,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Date | Item | Category (A/B/C) | Attribution | Notes |
 |---|---|---|---|---|
 | 2026-11-01 | `AGENTS.md`, `PROGRESS.md`, `CLAUDE.md` | C | `[AGENT]` | Working agreement and progress tracker set up |
+| 2026-11-15 | `~/f2/args.sh` (WSL home, not in repo) — prints `$0`, `$1`, `$#` | A | `[GUIDED]` | Script by learner. First shebang `#!/usr/bin/env` (no interpreter) caused an exec loop; learner fixed it by comparing with the working `hello.sh` |
 | 2026-11-07 | `learning/f2/f2_ignore_term.py` — catches SIGTERM with a handler, then sleeps | A | `[GUIDED]` | Agent named the APIs and pointed to docs. Learner chose a custom handler over the suggested `SIG_IGN`. Survived `kill`, died to `kill -9` with status 137 |
 | 2026-11-02 | `learning/f1_collections.py` — F1.1 add() test loop | A | `[GUIDED]` | Correct on first try. Only hint given: index `input` by position. Used `len(tests)` instead of hard-coding 3 |
 | 2026-11-04 | `learning/f1_functions.py` — F1.3d raise `ValueError` on empty suite | A | `[GUIDED]` | Correct first try given the constraints (top of function, pick a concrete exception type) |
@@ -181,6 +182,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | 2026-11-04 | Precision | Said a missed counter makes `total` too big; actually `total` is `len(tests)` and the counter sum falls short | Corrected by agent | 1 |
 | 2026-11-02 | Python / exceptions | Printed `e.__doc__` (the generic class docstring), then tried random dunders. One `except` block crashed with `AttributeError`, which killed the run anyway | Hints: a method reference vs a call (`__str__` vs `{e}`), and the name lives on the class (`type(e).__name__`). Learned that the error handler itself must not fail | 4 |
 | 2026-11-02 | Tooling | Zed Ctrl+Shift+R reran the old `f1_collections.py`, so the output didn't match the code | Learner noticed it themselves; now runs from the terminal | 1 |
+| 2026-11-15 | Bash / shebang | `#!/usr/bin/env` with no interpreter: the kernel runs `env ./args.sh`, `env` runs `./args.sh` again, forever, with no output. Then `#!/usr/bash` → `bad interpreter` | Fix found by learner (compared with `hello.sh`). The explanation of the loop needed a full reveal; learner still reads `args.sh` as the thing that runs `echo`, not bash | 5 |
 | 2026-11-02 | Design | Kept a manual `i` counter while also using `enumerate`, which duplicates the counter | Learner removed manual `i` and used `for i, test in enumerate(tests, 1)` | 2 |
 
 ---
@@ -299,3 +301,14 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **Moved to `~`:** `mv` across filesystems kept `777` (now real, so world-writable; agent explained the risk). Forgot the octal chart; given r=4/w=2/x=1 again. Then predicted `644` → `rw-r--r--` and `Permission denied` **before running** ✔ (reason was missing the "owner has no x" mechanism).
 - **chmod mistakes:** `rwxr-xr-x` → `755` ✔. "Execute for owner only" answered `chmod 755` ✘, then self-corrected to `744` (right only from 644; agent showed `664` → `744` silently drops group write, which is why symbolic mode exists). Symbolic attempt `chmod o+x` gave `-rw-rw-r-x`: **`o` read as owner** (same owner/other confusion as session 6). The prediction vs. output diff exposed it. Fixed with `chmod o-x` + `chmod u+x` → `-rwxrw-r--` ✔. Bonus (`chmod o-x,u+x` in one command) not tried.
 - **Next:** Bash part 2: script arguments (`$1`), `$?` inside a script, a tiny runner script `run.sh <file.py>` that reports the exit status.
+
+### 2026-11-15 — Session 9: Bash part 2, script arguments
+- **Milestone:** F2.
+- **Concepts covered:** `$0`, `$1`, `$#`; word splitting happens before the script starts, so quotes group words; a missing argument is an empty string, not an error; the kernel's shebang rule (`#!/interp` → `/interp script args`); `env CMD` runs CMD (looked up in `PATH`); `bash -x` traces commands; Ctrl+C = SIGINT → 130.
+- **Results:** predicted all four `args.sh` cases before running, all correct. Predicted 130 for Ctrl+C with the reason. Symbolic `chmod u+x` right first time.
+- **Bug found:** shebang `#!/usr/bin/env` with nothing after it hung silently (an exec loop). `bash -x` ran it fine because bash treats line 1 as a comment. A second try with `#!/usr/bash` gave `bad interpreter`. Learner fixed it by diffing against the working `hello.sh`.
+- **Agent error:** hinted that a silent hang "usually waits for something". That's wrong here (busy loop). Corrected in the next turn; the planned `top` check was never run.
+- **Explain-back:** the loop chain needed hint level 5 (revealed). The learner answered with general rules instead of concrete commands, and then named `./args.sh` as the thing that runs `echo`. **Open gap:** a script is a text file that an interpreter (bash) reads; in the broken loop bash never started.
+- **Habit gaps:** again skipped requested predictions (the `env` experiments) and the written chain; said "idk" without trying.
+- **`#!/bin/cat` experiment ✅:** learner predicted "prints the whole file" ✔. Changed `cat` → `bash` (got `Hello`) and explained: bash interprets the file, cat only prints it. **Shebang gap closed.** (Needed a prompt to give the "why".)
+- **Next:** Task 2 `run.sh <file.py>` (assigned): runs `python3 "$1"`, prints `exit status: <n>`; test with `ok.py`, `crash.py`, `three.py` (`sys.exit(3)`) and no argument, predictions first.
