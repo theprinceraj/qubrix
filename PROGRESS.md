@@ -18,7 +18,17 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 
 ## Current assignment
 
-**F1.3 — Exceptions** (Category A, learner implements). The learner asked for **one task at a time**: keep each step small and single.
+**F2 Bash part 2, Task 2: `run.sh <file.py>`** (Category A, learner implements). Assigned 2026-11-15. The learner asked for **one task at a time**: keep each step small and single.
+- Create `~/f2/run.sh` (WSL home, Linux FS). It runs `python3 "$1"` (quoted), then prints `exit status: <n>`. Read `$?` right after the command or save it to a variable first, because any command (including `echo`) overwrites it.
+- Make it executable for the owner only.
+- Test files in `~/f2`: `ok.py` (`print("fine")`), `crash.py` (`print(1 / 0)`), `three.py` (`import sys; sys.exit(3)`).
+- Predict first, then run: `./run.sh ok.py`, `./run.sh crash.py`, `./run.sh three.py`, `./run.sh` (no argument: what does `"$1"` expand to, and what does `python3` do with it?).
+- Done when: `cat run.sh`, four predictions written before running, four real outputs pasted.
+- Links ahead to M1 (`subprocess` return codes) and the missing-argument check (a runner has to detect it itself).
+
+## Assignment history (F1, closed 2026-11-05)
+
+**F1.3 — Exceptions** (Category A, learner implements).
 - Pre-check done by experiment in `learning/f1_break.py`. Learner classified: `"inputs"` typo / `"input": 5` / missing `"expected"` are the test's fault; `div` by 0 is the function's fault. Reads tracebacks bottom-up with guidance.
 - **F1.3a ✅ 2026-11-02:** `try` wraps only `func(a, b)`. Prints `Test 1: ERROR - ZeroDivisionError: division by zero`, then `continue`, so later tests still run. Needed hint level 4 for `type(e).__name__` / `{e}`. Nit: uses `e.__str__()` where `{e}` is idiomatic.
 - **F1.3b ✅ 2026-11-02:** a second `try` reads `input` and `expected` *before* calling `func`, and prints `BAD TEST - <Type>: <msg>`, then `continue`. Renamed `res` to `expected` (one variable, one meaning). Learned that Python has no block scope (compared it to JS `var` vs `let`). Experiment without `continue` showed a broken test graded with leftover values from the previous test, which gave a false PASS (`2/2 passed`). Learner explained it in their own words: the failed assignment never happened, so the old values stayed.
@@ -57,7 +67,7 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 |---|---|
 | Windows Python | 3.14.7 installed |
 | Docker | Docker Desktop 29.2.1 installed |
-| Git | 2.53.0 installed; project not yet a git repo |
+| Git | 2.53.0 installed; project is a git repo (branch `main`) |
 | WSL2 | WSL 2.6.3. **Ubuntu installed 2026-11-02** (user `theprinceraj`). Set as default by learner (verified with `wsl -l -v`) |
 
 ---
@@ -103,7 +113,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Type hints & clean code | 0 | Self-report |
 | Async programming | 0 | Self-report |
 | Processes, subprocesses & concurrency | 0 | Self-report |
-| Error handling & logging | 2 | 2026-11-04: F1.3c `[GUIDED]`: invariant check with `assert` (not yet seen to fire); knows `python -O` strips asserts (told, not practised). 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. No logging yet |
+| Error handling & logging | 2 | 2026-11-04: F1.3c `[GUIDED]`: invariant check with `assert` (not yet seen to fire); knows `python -O` strips asserts (told, not practised). 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. 2026-11-05 `[GUIDED]`: `logging` replaces `print`; learner set the INFO/WARNING/ERROR rule (see F1 logging in Assignment history). Open: lazy `%s` formatting |
 | Packaging & dependency management | 0 | Self-report |
 | Testing & debugging | 0 | Self-report |
 
@@ -111,7 +121,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Skill | Level | Evidence |
 |---|---|---|
 | Filesystem & permissions | 2 | 2026-11-12 `[GUIDED]`: on a real Linux FS, predicted `644` → no exec → Permission denied before running; saw `/mnt/d` makes every file `777` and that `mv` keeps the mode. Octal vs symbolic `chmod` (octal overwrites all 9 bits). Mixed up `o` (other) with owner again; fixed it after seeing the output. Still needs the chart. 2026-11-05: explained `/mnt/d` as a Windows drive bridge, not a copy; Windows-mounted files show as `777` (not a real isolation boundary). Read `ls -l` and octal modes; `chmod 640` applied and explained (`[GUIDED]`, learner predicted most of it). Umask worked out with hints (`0022`→`644`, `077`→`600`). Gap: `chmod` of `other` at digit level was first described loosely; not yet practised solo |
-| Processes & signals | 2 | 2026-11-07 `[GUIDED]`: found PIDs with `ps -ef`, killed `sleep` with `kill` and `kill -9`, read `$?`. Derived 128 + signal number with a subtraction hint and correctly predicted 137. Classified 0, 1, 137, 143 correctly after being told the below/above 128 rule. Gaps: `$?` is per shell and per last command (ran it in the wrong terminal, and twice without `echo`); catching or ignoring SIGTERM not practised. 2026-11-05: explained SIGTERM (catchable, clean exit) vs SIGKILL (uncatchable) and why a sandbox needs SIGKILL as fallback |
+| Processes & signals | 2 | 2026-11-15: predicted Ctrl+C → SIGINT → 130 with the 128 + 2 reasoning, no hint. 2026-11-07 `[GUIDED]`: found PIDs with `ps -ef`, killed `sleep` with `kill` and `kill -9`, read `$?`. Derived 128 + signal number with a subtraction hint and correctly predicted 137. Classified 0, 1, 137, 143 correctly after being told the below/above 128 rule. Gaps: `$?` is per shell and per last command (ran it in the wrong terminal, and twice without `echo`); catching or ignoring SIGTERM not practised. 2026-11-05: explained SIGTERM (catchable, clean exit) vs SIGKILL (uncatchable) and why a sandbox needs SIGKILL as fallback |
 | Streams (stdout/stderr) | 2 | 2026-11-05 `[GUIDED]`: needed three hints and a concrete `ls` demo to separate stdout from stderr; the terminal is the default destination, not a stream. Predicted and verified `out.txt` / `err.txt` contents |
 | Memory & resource management | 0 | Self-report |
 | Networking & ports | 0 | Self-report |
@@ -189,9 +199,13 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 
 ## Remaining gaps / focus areas
 
-- Starting from zero across all five areas; Python fundamentals are the first priority.
-- No Linux environment yet — install Ubuntu in WSL2. First attempt ran `wsl` inside a Linux shell (docker-desktop distro) instead of PowerShell; gap: knowing which shell you're in.
-- Product purpose not yet understood by learner; revisit the draft definition after F1.
+*Updated 2026-11-15.*
+- **Habit:** skips requested predictions and written explanations, or answers "idk" without trying. Answers "why" with a general rule instead of the concrete case. Keep asking for a prediction before every command and a mechanism in every explanation.
+- **Linux:** owner/other (`u`/`o`) confusion recurred twice (sessions 6, 8); right in session 9. Needs the octal chart for `chmod`. `$?` is per shell and per last command.
+- **Bash:** has written one script (`args.sh`). Not yet: `$?` inside a script, `if`, argument checks, pipes.
+- **Threat model leftovers for M3:** wall-clock vs CPU limit, total disk quota, tests invisible to the submission, in-process tampering.
+- **Not started:** Docker, testing/pytest, type hints, async, subprocess, AI evaluation.
+- **Product purpose:** learner has not confirmed the draft product definition. F1 is done, so this is due.
 
 ---
 
