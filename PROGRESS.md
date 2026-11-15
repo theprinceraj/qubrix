@@ -10,21 +10,25 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 
 | Field | Value |
 |---|---|
-| Current milestone | **F1 — Python foundations ✅ finished 2026-11-05** (M0 setup mostly done) |
-| Active task | **F2 in progress** (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Threat model ✅ and Bash part 1 ✅ (session 8: variables, quotes, shebang, chmod). Bash part 2 step 1 ✅ (session 9: `$0`/`$1`/`$#`, `args.sh`). Shebang/interpreter model ✅ (`#!/bin/cat` experiment). Next: Task 2 `run.sh <file.py>` (`$?` in a script) |
+| Current milestone | **M1 — Local Python execution engine** (started 2026-11-15). F1 ✅ 2026-11-05, F2 ✅ 2026-11-15, F3 folded into M1 |
+| Active task | **M1.2 timeouts in `run_file`** (see Current assignment). M1.1 ✅. F2 history: (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Threat model ✅ and Bash part 1 ✅ (session 8: variables, quotes, shebang, chmod). Bash part 2 step 1 ✅ (session 9: `$0`/`$1`/`$#`, `args.sh`). Shebang/interpreter model ✅ (`#!/bin/cat` experiment). Next: Task 2 `run.sh <file.py>` (`$?` in a script) |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
 | Last session | 2026-11-15 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
 
 ## Current assignment
 
-**F2 Bash part 2, Task 2: `run.sh <file.py>`** (Category A, learner implements). Assigned 2026-11-15. The learner asked for **one task at a time**: keep each step small and single.
-- Create `~/f2/run.sh` (WSL home, Linux FS). It runs `python3 "$1"` (quoted), then prints `exit status: <n>`. Read `$?` right after the command or save it to a variable first, because any command (including `echo`) overwrites it.
-- Make it executable for the owner only.
-- Test files in `~/f2`: `ok.py` (`print("fine")`), `crash.py` (`print(1 / 0)`), `three.py` (`import sys; sys.exit(3)`).
-- Predict first, then run: `./run.sh ok.py`, `./run.sh crash.py`, `./run.sh three.py`, `./run.sh` (no argument: what does `"$1"` expand to, and what does `python3` do with it?).
-- Done when: `cat run.sh`, four predictions written before running, four real outputs pasted.
-- Links ahead to M1 (`subprocess` return codes) and the missing-argument check (a runner has to detect it itself).
+**Pace change 2026-11-15 (learner request: "increase speed"):** one combined task per step instead of many micro-steps; one prediction block per task (not per command); shorter explanations; F2 closes with this task, F3 (venv, type hints, pytest) is folded into M1 just-in-time. Next after `run.sh`: **M1 — Python runner with `subprocess`**.
+
+**M1.2: timeouts in `run_file`** (Category A, learner implements). Assigned 2026-11-16.
+- `run_file(path, timeout)`; new samples `loop.py` (`print("started", flush=True)` then `while True: pass`) and `sleepy.py` (`import time; time.sleep(999)`).
+- Catch only `subprocess.TimeoutExpired`. Dict gains `timed_out` (bool); learner decides what `returncode` is on timeout. Partial stdout (`started`) must be kept as `str`.
+- Predictions first: what `subprocess.run` does to the child on timeout (from docs), and what the dict will hold for `loop.py`.
+- Done when: code, predictions, output for all 5 samples, and `time python3 m1/runner.py` shows the run ends near 2 × timeout.
+
+**M1.1 ✅ 2026-11-16** `[GUIDED]`: `learning/m1/runner.py` `run_file(path)` → dict `returncode`/`stdout`/`stderr` via `subprocess.run([sys.executable, path], capture_output=True, text=True, check=False)`. Needed the task split into two steps and a clarification that inherited stdout/stderr went straight to the terminal. Predictions (0/3/1, traceback in stderr) all right. First version built the dict in the caller; moved it into `run_file` after the interface argument. Ran the `check=True` experiment (loop dies at `crash.py`, other files never run). "Why" took two prompts: first a general rule ("useful if we want the engine to fail"), then "our engine failed because it didn't check other codes" (the consequence). Agent revealed the rule: the candidate's failure is a result, not an engine error (hint level 5).
+
+**F2 closed 2026-11-15** with `~/f2/run.sh` `[GUIDED]`: usage on stderr + exit 2, `python3 "$1"`, `status=$?`, prints and forwards the status. Predictions for crash (1) and three (3) written before running, both right.
 
 ## Assignment history (F1, closed 2026-11-05)
 
@@ -171,6 +175,8 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Date | Item | Category (A/B/C) | Attribution | Notes |
 |---|---|---|---|---|
 | 2026-11-01 | `AGENTS.md`, `PROGRESS.md`, `CLAUDE.md` | C | `[AGENT]` | Working agreement and progress tracker set up |
+| 2026-11-16 | `learning/m1/runner.py` — M1.1 `run_file(path)` with `subprocess.run`, returns dict | A | `[GUIDED]` | Sample files copied by agent (Category C). Learner wrote all runner code; hints: split into 2 steps, where the output went, interface boundary |
+| 2026-11-15 | `~/f2/run.sh` (WSL home, not in repo) — runs a .py file, prints and forwards its exit status, usage error on no args | A | `[GUIDED]` | Arg check correct first try. Shebang relative-path bug (`#!usr/bin/bash`, `#!~/bin/bash`) fixed by learner after hint. First version used `exec python3 "$@"` from Google; learner explained why `exec` can't print the status and chose `"$1"` over `"$@"` |
 | 2026-11-15 | `~/f2/args.sh` (WSL home, not in repo) — prints `$0`, `$1`, `$#` | A | `[GUIDED]` | Script by learner. First shebang `#!/usr/bin/env` (no interpreter) caused an exec loop; learner fixed it by comparing with the working `hello.sh` |
 | 2026-11-07 | `learning/f2/f2_ignore_term.py` — catches SIGTERM with a handler, then sleeps | A | `[GUIDED]` | Agent named the APIs and pointed to docs. Learner chose a custom handler over the suggested `SIG_IGN`. Survived `kill`, died to `kill -9` with status 137 |
 | 2026-11-02 | `learning/f1_collections.py` — F1.1 add() test loop | A | `[GUIDED]` | Correct on first try. Only hint given: index `input` by position. Used `len(tests)` instead of hard-coding 3 |
@@ -326,3 +332,9 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **Habit gaps:** again skipped requested predictions (the `env` experiments) and the written chain; said "idk" without trying.
 - **`#!/bin/cat` experiment ✅:** learner predicted "prints the whole file" ✔. Changed `cat` → `bash` (got `Hello`) and explained: bash interprets the file, cat only prints it. **Shebang gap closed.** (Needed a prompt to give the "why".)
 - **Next:** Task 2 `run.sh <file.py>` (assigned): runs `python3 "$1"`, prints `exit status: <n>`; test with `ok.py`, `crash.py`, `three.py` (`sys.exit(3)`) and no argument, predictions first.
+
+### 2026-11-15 — Session 10: run.sh, F2 closed, pace change
+- **Pace change (learner request):** bigger combined tasks, one prediction block per task, shorter explanations; F3 folded into M1.
+- **run.sh** `[GUIDED]`: see ledger. Concepts: `exec` replaces the process (learner explained it); `"$@"` vs `"$1"` → argument injection (`-c` example, agent-given); kernel doesn't expand `~` in shebangs; `.` isn't in `PATH` (`run.sh: command not found`).
+- **Habit:** predictions skipped at first, then written before the crash/three runs (both right). Didn't paste `echo $?` after the final version's runs.
+- **Next:** M1.1 `run_file(path)` with `subprocess.run`.
