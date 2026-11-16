@@ -11,20 +11,18 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **M1 — Local Python execution engine** (started 2026-11-15). F1 ✅ 2026-11-05, F2 ✅ 2026-11-15, F3 folded into M1 |
-| Active task | **M1.2 timeouts in `run_file`** (see Current assignment). M1.1 ✅. F2 history: (Linux in WSL Ubuntu). Done: filesystem/mounts concept check, streams (`>`, `2>`), permissions and octal, umask, exit statuses after signals (`kill`, `kill -9`, `$?`). Also done: who sent the signal (concept), a process that catches SIGTERM, timeout kill sequence (explain-back). Threat model ✅ and Bash part 1 ✅ (session 8: variables, quotes, shebang, chmod). Bash part 2 step 1 ✅ (session 9: `$0`/`$1`/`$#`, `args.sh`). Shebang/interpreter model ✅ (`#!/bin/cat` experiment). Next: Task 2 `run.sh <file.py>` (`$?` in a script) |
+| Active task | **M1.3 (TBD, assign next session)** — decide next M1 slice (e.g. missing/unrunnable file behavior as a candidate result, or separating wall-clock timeout concerns). M1.1 ✅, M1.2 ✅ |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
-| Last session | 2026-11-15 |
+| Last session | 2026-11-16 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
 
 ## Current assignment
 
 **Pace change 2026-11-15 (learner request: "increase speed"):** one combined task per step instead of many micro-steps; one prediction block per task (not per command); shorter explanations; F2 closes with this task, F3 (venv, type hints, pytest) is folded into M1 just-in-time. Next after `run.sh`: **M1 — Python runner with `subprocess`**.
 
-**M1.2: timeouts in `run_file`** (Category A, learner implements). Assigned 2026-11-16.
-- `run_file(path, timeout)`; new samples `loop.py` (`print("started", flush=True)` then `while True: pass`) and `sleepy.py` (`import time; time.sleep(999)`).
-- Catch only `subprocess.TimeoutExpired`. Dict gains `timed_out` (bool); learner decides what `returncode` is on timeout. Partial stdout (`started`) must be kept as `str`.
-- Predictions first: what `subprocess.run` does to the child on timeout (from docs), and what the dict will hold for `loop.py`.
-- Done when: code, predictions, output for all 5 samples, and `time python3 m1/runner.py` shows the run ends near 2 × timeout.
+**Next (M1.3, not yet assigned):** pick the next M1 slice in the next session. Candidates: define/implement behavior for a missing or non-.py path as a *candidate result* (observe `python3`’s own exit/stderr through the normal path, no pre-check), or introduce basic tests/type hints around `run_file` (F3 folded in). Assign with predictions + acceptance criteria before coding.
+
+**M1.2 ✅ 2026-11-16** `[GUIDED]`: `run_file(path, timeout)` in `learning/m1/runner.py` catches only `subprocess.TimeoutExpired`, returns `returncode/stdout/stderr/timed_out`. Samples added: `learning/m1/samples/loop.py` (`print("started", flush=True); while True: pass`) and `learning/m1/samples/sleep.py`. Timeout path normalizes output to `str` (decodes bytes, empty stream → `""`) so partial stdout (`"started\n"`) is preserved and types match normal runs. `returncode` on timeout set to `124` (engine sentinel, conventional) with `timed_out` as the primary signal. `__main__` runs 5 cases (`crash, ok, three, loop, sleep`) with `timeout=2`; `time` ~4.3s real. Learner implemented; agent reviewed (spec gaps: extra missing-file pre-check, bytes/None on timeout, consistency). Understanding check: broad `except` can hide engine bugs; checking only `returncode==124` can misclassify a program that exits 124. Minor open point: prediction 1 overstated "SIGKILL right away" without a precise doc quote for `subprocess.run` timeout behavior.
 
 **M1.1 ✅ 2026-11-16** `[GUIDED]`: `learning/m1/runner.py` `run_file(path)` → dict `returncode`/`stdout`/`stderr` via `subprocess.run([sys.executable, path], capture_output=True, text=True, check=False)`. Needed the task split into two steps and a clarification that inherited stdout/stderr went straight to the terminal. Predictions (0/3/1, traceback in stderr) all right. First version built the dict in the caller; moved it into `run_file` after the interface argument. Ran the `check=True` experiment (loop dies at `crash.py`, other files never run). "Why" took two prompts: first a general rule ("useful if we want the engine to fail"), then "our engine failed because it didn't check other codes" (the consequence). Agent revealed the rule: the candidate's failure is a result, not an engine error (hint level 5).
 
@@ -116,7 +114,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Fundamentals & advanced concepts | 2 | 2026-11-02: F1.2 functions as values, return vs print, tuple return `[GUIDED]`. Gaps: set vs dict literal, dict unpacking gives keys, `None` (thought "void"). Earlier: wrote F1.1 (list of dicts, loop, counter, f-string) `[GUIDED]`; correctly answered list/dict indexing (`tests[1]["expected"]`) and explained why named keys beat positional lists; not yet practised in code |
 | Type hints & clean code | 0 | Self-report |
 | Async programming | 0 | Self-report |
-| Processes, subprocesses & concurrency | 0 | Self-report |
+| Processes, subprocesses & concurrency | 1 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 used `subprocess.run` with `sys.executable`, `capture_output`, `text`, `check=False`, `timeout`, and handled `TimeoutExpired`. Understood candidate failure vs engine error and why not to catch broadly. Gaps: `Popen`, signals/process groups, async/concurrency not yet touched |
 | Error handling & logging | 2 | 2026-11-04: F1.3c `[GUIDED]`: invariant check with `assert` (not yet seen to fire); knows `python -O` strips asserts (told, not practised). 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. 2026-11-05 `[GUIDED]`: `logging` replaces `print`; learner set the INFO/WARNING/ERROR rule (see F1 logging in Assignment history). Open: lazy `%s` formatting |
 | Packaging & dependency management | 0 | Self-report |
 | Testing & debugging | 0 | Self-report |
@@ -147,11 +145,11 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 ### 4. Code execution infrastructure
 | Skill | Level | Evidence |
 |---|---|---|
-| Process creation & lifecycle | 0 | Self-report |
+| Process creation & lifecycle | 1 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 `run_file` starts a child via `subprocess.run([sys.executable, path], capture_output=True, text=True, check=False, timeout=...)`, reads `returncode`/stdout/stderr, and treats timeout as a separate outcome (`TimeoutExpired` → engine result). Gaps: process groups, SIGTERM→grace→SIGKILL, child outliving parent |
 | Safe execution of untrusted code | 1 | 2026-11-12: threat model exercise. Listed 5 threats unprompted (CPU, RAM, disk, outbound network, LAN), found result tampering with a hint, mapped threats to defences, and found the network gap. Explained that non-root protects the other defences. Gaps: wall-clock vs CPU limit, hidden vs read-only tests, in-process tampering (all told, not yet practised) |
-| Execution timeouts | 0 | Self-report |
+| Execution timeouts | 2 | 2026-11-16 `[GUIDED]`: M1.2 added wall-clock `timeout` to `run_file`, caught only `TimeoutExpired`, preserved partial stdout as `str`, returned `timed_out` + sentinel `returncode=124`, verified bounded run (~2×timeout). Explained flush/buffering and `""` vs `None` for captured-empty streams; knows `timed_out` is primary (exit code 124 could be produced by candidate). Gap: exact `subprocess.run` timeout kill mechanism stated imprecisely (needs doc quote); no grace period/SIGTERM sequence yet |
 | Resource limits | 0 | Self-report |
-| Output capture | 0 | Self-report |
+| Output capture | 2 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 capture stdout/stderr via pipes (`capture_output=True, text=True`) into result dict; normalized `TimeoutExpired` payloads (bytes/None → `str`) to keep interface consistent. Gap: encoding/errors, large output handling |
 | Worker architecture | 0 | Self-report |
 | Job queues | 0 | Self-report |
 | Failure handling | 0 | Self-report |
@@ -216,6 +214,14 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 ---
 
 ## Session log
+
+### 2026-11-16 — Session 11: M1.2 timeouts
+- **Milestone:** M1
+- **Implemented:** M1.2 `learning/m1/runner.py` `run_file(path, timeout)` `[GUIDED]` — catches only `TimeoutExpired`, adds `timed_out`, preserves partial stdout as `str`, normalizes empty timeout streams to `""`, `returncode=124` sentinel; `loop.py`/`sleep.py` samples; 5-case run in ~4.3s for `timeout=2`.
+- **Concepts:** wall-clock timeout via `subprocess.run(timeout=...)`, `TimeoutExpired` payload/typing, pipe buffering and `flush=True`, consistent result interface (`""` vs `None` for captured-empty), `timed_out` as primary signal vs conventional timeout return code.
+- **Predictions/checks:** learner predicted timeout → kill+`TimeoutExpired`, `timed_out=True`, partial stdout, `returncode=124` (reasonable; kill mechanism stated imprecisely). Understanding check passed: avoid broad `except` to not hide engine bugs; `returncode==124` alone can misclassify a candidate that exits 124.
+- **Review fixes:** removed extra missing-file pre-check/`timeout.py` case, decoded bytes and normalized `None`→`""` on timeout path.
+- **Next:** assign M1.3 (e.g. observe/report missing/unrunnable file via normal path as candidate result, or add basic tests/type hints) with predictions before coding.
 
 ### 2026-11-01 — Session 0: Setup
 - **Implemented:** `AGENTS.md`, `PROGRESS.md`, `CLAUDE.md` `[AGENT]`
