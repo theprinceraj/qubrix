@@ -1,3 +1,5 @@
+import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -6,31 +8,33 @@ ENGINE_TIMEOUT = 5
 
 
 def run_file(path, timeout=ENGINE_TIMEOUT):
-    try:
-        obj = subprocess.run(
-            [sys.executable, path],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            errors="backslashreplace",
-        )
-    except subprocess.TimeoutExpired as e:
-        return {
-            "returncode": 124,
-            "stdout": e.stdout.decode("utf-8", errors="backslashreplace")
-            if e.stdout is not None
-            else "",
-            "stderr": e.stderr.decode("utf-8", errors="backslashreplace")
-            if e.stderr is not None
-            else "",
-            "timed_out": True,
-        }
+    with subprocess.Popen(
+        [sys.executable, path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        errors="backslashreplace",
+        start_new_session=True,
+    ) as p:
+        try:
+            out, err = p.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            out, err = p.communicate()  # drain pipes+reaps; gives partial output
+            return {
+                "returncode": 124,
+                "stdout": out,
+                "stderr": err,
+                "timed_out": True,
+            }
 
     return {
-        "returncode": obj.returncode,
-        "stdout": obj.stdout,
-        "stderr": obj.stderr,
+        "returncode": p.returncode,
+        "stdout": out,
+        "stderr": err,
         "timed_out": False,
     }
 
