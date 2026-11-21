@@ -10,17 +10,19 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 
 | Field | Value |
 |---|---|
-| Current milestone | **M1 — Local Python execution engine** (started 2026-11-15). F1 ✅ 2026-11-05, F2 ✅ 2026-11-15, F3 folded into M1 |
-| Active task | **M1.3** — missing/unrunnable file behavior as a candidate result (assign 2026-11-21, awaiting learner implementation). Add `test_missing_file` with predictions first; then basic tests/type hints around `run_file` (F3 folded in). M1.1 ✅, M1.2 ✅ |
+| Current milestone | **M2 — Resource limits & process termination on Linux** (started 2026-11-21). M1 ✅ 2026-11-21, F1 ✅ 2026-11-05, F2 ✅ 2026-11-15, F3 folded into M1 |
+| Active task | **M2.1** — kill the whole process tree on timeout (assign 2026-11-21). Reproduce an orphaned grandchild, then replace `subprocess.run` with `Popen` + `start_new_session=True` + `os.killpg`; result-dict interface unchanged. M1.1–M1.3 ✅ |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
 | Last session | 2026-11-21 |
-| Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
+| Open decisions | Product definition ✅ confirmed 2026-11-21: benchmark coding agents. Weekly time budget still unknown |
 
 ## Current assignment
 
 **Pace change 2026-11-15 (learner request: "increase speed"):** one combined task per step instead of many micro-steps; one prediction block per task (not per command); shorter explanations; F2 closes with this task, F3 (venv, type hints, pytest) is folded into M1 just-in-time. Next after `run.sh`: **M1 — Python runner with `subprocess`**.
 
-**M1.3 assignment 2026-11-21:** add `test_missing_file` to `learning/m1/test_runner.py`: `run_file(<missing path>)` must produce a normal result dict (`returncode`, `stdout`, `stderr`, `timed_out`), no pre-check before `subprocess.run`. Predictions first: does `subprocess.run` raise on a missing script, and which exception? Then implement and run pytest.
+**M2.1 assignment 2026-11-21:** prove that a child process spawned by a candidate survives `run_file`'s timeout kill, then fix it. Write `learning/m2/samples/spawner.py` that starts a long-lived grandchild (`subprocess.Popen([sys.executable, "-c", "..."])`) and sleeps; a test/experiment must show the grandchild alive after `run_file(..., timeout=1)` returns `timed_out=True`. Then replace `subprocess.run` with `Popen` + `communicate(timeout=...)`, start the child with `start_new_session=True`, and on timeout kill the whole process group with `os.killpg(..., signal.SIGKILL)`. Keep the result-dict interface. Predictions first: does the grandchild survive the timeout, and what does `Popen.returncode` show when the child dies from a signal? Acceptance: orphan reproduced before the fix, gone after, all M1 tests still green, learner explains process vs process group.
+
+**M1.3 ✅ 2026-11-21** `[GUIDED]`: `test_missing_file` in `learning/m1/test_runner.py` — missing path returns a normal result dict (exact key set, `timed_out=False`, `returncode=2`, empty stdout, filename + `No such file or directory` in stderr); `runner.py` unchanged (no pre-check). Predictions: expected a raised exception (`ValueError`) and returncode 1; actual: no exception, the child Python exits 2 with its own CLI message. Follow-up: `check=True` → `CalledProcessError`; `FileNotFoundError` needs a missing *executable*. Suite 7/7 green (2.67s). Mistake: ran the experiment by hardcoding `"missing.py"` in `runner.py`, breaking all tests; restored. Also noticed `test_badbytes_does_not_crash_engine` passed while the engine ran the wrong file (weak assertion).
 
 **Timeout boundedness test ✅ 2026-11-21** `[GUIDED]`: `test_loop_is_bounded` in `learning/m1/test_runner.py` measures `time.monotonic()` around `run_file(loop.py, timeout=1)` and asserts `timed_out`, `"started"` in stdout, `elapsed < 2`. Full suite 6/6 green (9.03s); loop case: `timed_out=True`, stdout `"started\n"`, elapsed 1.04s. Learner's answer on `time.monotonic()` vs `time.time()` was correct (no epoch reference, immune to clock updates); Python docs confirmed: "a clock that cannot go backwards ... not affected by system clock updates".
 
@@ -78,9 +80,9 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 
 ## Product definition
 
-> **DRAFT — proposed by the agent, learner has not confirmed.**
+> **CONFIRMED 2026-11-21 — learner chose to build a coding-agent benchmarking platform.**
 
-Qubrix is a sandboxed code-execution and evaluation platform: you submit code (written by a human or an LLM) plus a set of tests; Qubrix runs it safely in isolation with time and memory limits, and reports which tests passed. On top of that it computes benchmark metrics (e.g. pass@k) to compare how well different AI models or coding agents solve programming problems.
+Qubrix is a sandboxed code-execution and evaluation platform for benchmarking coding agents: you submit code (written by a human or an LLM) plus a set of tests; Qubrix runs it safely in isolation with time and memory limits, and reports which tests passed. On top of that it computes benchmark metrics (e.g. pass@k) to compare how well different AI models or coding agents solve programming problems.
 
 ---
 
@@ -92,10 +94,10 @@ Qubrix is a sandboxed code-execution and evaluation platform: you submit code (w
 |---|---|---|---|
 | M0 | Project setup, baseline assessment, product scope | — | Mostly done |
 | F1 | Python foundations: data types, collections, functions, control flow, files, exceptions — all applied to tiny Qubrix-flavoured exercises | Python | **Finished 2026-11-05** |
-| F2 | Linux foundations in WSL Ubuntu: shell, filesystem, permissions, processes | Linux | In progress |
-| F3 | Python for tooling: modules, virtual envs, type hints, first pytest tests | Python, testing | Not started |
-| M1 | Local Python execution engine (`subprocess`, timeouts, output capture, exit codes) | Python, processes, signals | Not started |
-| M2 | Resource limits & process termination on Linux (rlimits, process groups, kill semantics) | Linux, systems | Not started |
+| F2 | Linux foundations in WSL Ubuntu: shell, filesystem, permissions, processes | Linux | **✅ 2026-11-15** |
+| F3 | Python for tooling: modules, virtual envs, type hints, first pytest tests | Python, testing | Folded into M1 ✅ |
+| M1 | Local Python execution engine (`subprocess`, timeouts, output capture, exit codes) | Python, processes, signals | **✅ 2026-11-21** |
+| M2 | Resource limits & process termination on Linux (rlimits, process groups, kill semantics) | Linux, systems | **In progress** |
 | M3 | Docker-isolated execution (images vs containers, Dockerfile, sandbox flags, no-network, limits) + threat model | Docker, security | Not started |
 | M4 | Test runner: execute a solution against test cases, report pass/fail per case | Pytest, testing | Not started |
 | M5 | Job queue & worker architecture (async, concurrency, failure handling, retries) | Async, workers, queues | Not started |
@@ -116,10 +118,10 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Fundamentals & advanced concepts | 2 | 2026-11-02: F1.2 functions as values, return vs print, tuple return `[GUIDED]`. Gaps: set vs dict literal, dict unpacking gives keys, `None` (thought "void"). Earlier: wrote F1.1 (list of dicts, loop, counter, f-string) `[GUIDED]`; correctly answered list/dict indexing (`tests[1]["expected"]`) and explained why named keys beat positional lists; not yet practised in code |
 | Type hints & clean code | 0 | Self-report |
 | Async programming | 0 | Self-report |
-| Processes, subprocesses & concurrency | 1 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 used `subprocess.run` with `sys.executable`, `capture_output`, `text`, `check=False`, `timeout`, and handled `TimeoutExpired`. Understood candidate failure vs engine error and why not to catch broadly. Gaps: `Popen`, signals/process groups, async/concurrency not yet touched |
+| Processes, subprocesses & concurrency | 1 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 used `subprocess.run` with `sys.executable`, `capture_output`, `text`, `check=False`, `timeout`, and handled `TimeoutExpired`. Understood candidate failure vs engine error and why not to catch broadly. 2026-11-21: predicted `FileNotFoundError` (missing executable) vs `CalledProcessError` (`check=True`, non-zero exit) correctly after an initial `ValueError` guess; explained exec failure vs candidate exit. Gaps: `Popen`, signals/process groups (M2.1), async/concurrency not yet touched |
 | Error handling & logging | 2 | 2026-11-04: F1.3c `[GUIDED]`: invariant check with `assert` (not yet seen to fire); knows `python -O` strips asserts (told, not practised). 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. 2026-11-05 `[GUIDED]`: `logging` replaces `print`; learner set the INFO/WARNING/ERROR rule (see F1 logging in Assignment history). Open: lazy `%s` formatting |
 | Packaging & dependency management | 0 | Self-report |
-| Testing & debugging | 1 | 2026-11-21: wrote assertion-based tests for `run_file` (exit codes, timeout, bad bytes, bounded run); no independent debugging session yet |
+| Testing & debugging | 2 | 2026-11-21 `[GUIDED]`: M1.3 wrote `test_missing_file`, debugged a prediction-vs-actual failure (`returncode 2`, Python CLI message), and added a key-shape assertion; suite 7/7 green. Learned that a weak assertion (`timed_out == False` only) can pass while the engine runs the wrong file. Gaps: fixtures, parametrize, conftest; no solo debugging session yet |
 
 ### 2. Linux & systems engineering
 | Skill | Level | Evidence |
@@ -154,12 +156,12 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Output capture | 2 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 capture stdout/stderr via pipes (`capture_output=True, text=True`) into result dict; normalized `TimeoutExpired` payloads (bytes/None → `str`) to keep interface consistent. Gap: encoding/errors, large output handling |
 | Worker architecture | 0 | Self-report |
 | Job queues | 0 | Self-report |
-| Failure handling | 0 | Self-report |
+| Failure handling | 1 | 2026-11-21: M1.3 attribution rule — a missing/bad candidate input returns a result dict (candidate outcome); an escaped exception is an engine failure. Keeps the run alive and preserves one record per submission for pass@k. Gap: retries, worker crash recovery (M5) |
 
 ### 5. Testing & AI evaluation
 | Skill | Level | Evidence |
 |---|---|---|
-| Pytest | 2 | 2026-11-21 `[GUIDED]`: wrote several pytest test functions with asserts (test_crash, test_exitcode, test_ok, test_runner incl. `test_loop_is_bounded` with a monotonic elapsed bound); ran suite 6/6 green (9.03s). Gaps: fixtures, parametrize, conftest, markers, `-v` reading. |
+| Pytest | 2 | 2026-11-21 `[GUIDED]`: wrote several pytest test functions with asserts (test_crash, test_exitcode, test_ok, test_runner incl. `test_loop_is_bounded` with a monotonic elapsed bound); ran suite 6/6 green (9.03s). M1.3 added `test_missing_file` + key-shape assertion (7/7 green). Gaps: fixtures, parametrize, conftest, markers, `-v` reading. |
 | Test case generation | 0 | Self-report |
 | Functional correctness | 0 | Self-report |
 | Benchmark design | 0 | Self-report |
@@ -175,6 +177,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Date | Item | Category (A/B/C) | Attribution | Notes |
 |---|---|---|---|---|
 | 2026-11-01 | `AGENTS.md`, `PROGRESS.md`, `CLAUDE.md` | C | `[AGENT]` | Working agreement and progress tracker set up |
+| 2026-11-21 | `learning/m1/test_runner.py` — M1.3 `test_missing_file` + key-shape assertion | A | `[GUIDED]` | Missing path returns a normal dict: `returncode=2`, stderr from the child Python; `runner.py` unchanged. Predictions first; two wrong (exception, returncode 1), corrected by experiment. Agent pointed out the in-place experiment that broke the suite |
 | 2026-11-16 | `learning/m1/runner.py` — M1.1 `run_file(path)` with `subprocess.run`, returns dict | A | `[GUIDED]` | Sample files copied by agent (Category C). Learner wrote all runner code; hints: split into 2 steps, where the output went, interface boundary |
 | 2026-11-15 | `~/f2/run.sh` (WSL home, not in repo) — runs a .py file, prints and forwards its exit status, usage error on no args | A | `[GUIDED]` | Arg check correct first try. Shebang relative-path bug (`#!usr/bin/bash`, `#!~/bin/bash`) fixed by learner after hint. First version used `exec python3 "$@"` from Google; learner explained why `exec` can't print the status and chose `"$1"` over `"$@"` |
 | 2026-11-15 | `~/f2/args.sh` (WSL home, not in repo) — prints `$0`, `$1`, `$#` | A | `[GUIDED]` | Script by learner. First shebang `#!/usr/bin/env` (no interpreter) caused an exec loop; learner fixed it by comparing with the working `hello.sh` |
@@ -192,6 +195,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 
 | Date | Area | Mistake | How it was fixed | Hint level needed (1–5) |
 |---|---|---|---|---|
+| 2026-11-21 | Debugging | Ran a subprocess experiment by editing the shared `runner.py` (`[sys.executable, "missing.py"]`), so all 7 tests exercised the wrong command; a weak test still passed | Restored `[sys.executable, path]`; experiments belong in a scratch script or `python3 -c`. Agent pointed at the diff | 1 |
 | 2026-11-02 | Python / enumerate | Treated an `enumerate` item as the dict and indexed it with `test[i]["input"]`, which gave `TypeError: 'int' object is not subscriptable` | Debugged it with `print(test, type(test))` and switched to `test[1]`. Mental model still wrong: thought the tuple held two test dicts | 3 (pointed to unpacking docs) |
 | 2026-11-02 | Python / types | Returned `{total, passes}` (a set, so unordered and duplicates collapse), which printed `3/2 passed`. Then returned `{total: total, passes: passes}` (unquoted keys, so the values became keys), which gave `ValueError` when all tests passed | Ran the experiments, saw the error, switched to a tuple return. Still thought dict unpacking gives values (it gives keys) | 3 |
 | 2026-11-04 | Design | Returned a dict, then unpacked it with `a, b, ... = result.values()`, which depends on key order again and would silently swap counts | Thought experiment ("what if someone reorders the keys?"); learner explained the silent swap and switched to `result["passes"]` | 2 |
@@ -205,17 +209,26 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 
 ## Remaining gaps / focus areas
 
-*Updated 2026-11-15.*
-- **Habit:** skips requested predictions and written explanations, or answers "idk" without trying. Answers "why" with a general rule instead of the concrete case. Keep asking for a prediction before every command and a mechanism in every explanation.
+*Updated 2026-11-21.*
+- **Habit:** skips requested predictions and written explanations, or answers "idk" without trying. Answers "why" with a general rule instead of the concrete case. Ran an experiment by editing production code (M1.3). Keep asking for a prediction before every command, a mechanism in every explanation, and experiments in scratch files.
 - **Linux:** owner/other (`u`/`o`) confusion recurred twice (sessions 6, 8); right in session 9. Needs the octal chart for `chmod`. `$?` is per shell and per last command.
 - **Bash:** has written one script (`args.sh`). Not yet: `$?` inside a script, `if`, argument checks, pipes.
+- **M2 focus:** process vs process group, `Popen`, orphaned grandchildren, `start_new_session=True`, `os.killpg`, SIGTERM→grace→SIGKILL, rlimits (`RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE`).
 - **Threat model leftovers for M3:** wall-clock vs CPU limit, total disk quota, tests invisible to the submission, in-process tampering.
-- **Not started:** Docker, type hints, async, AI evaluation; pytest and subprocess (learner practised plain assert-based tests with guidance).
-- **Product purpose:** learner has not confirmed the draft product definition. F1 is done, so this is due.
+- **Not started:** Docker, type hints, async, AI evaluation; pytest and subprocess now practised with guidance.
+- **Product purpose:** ✅ confirmed 2026-11-21 — Qubrix benchmarks coding agents.
 
 ---
 
 ## Session log
+
+### 2026-11-21 — Session 13: M1.3 missing-file contract; M1 closed
+- **Milestone:** M1 → closed; M2 started.
+- **Product decision:** learner confirmed Qubrix benchmarks coding agents (draft definition accepted).
+- **Implemented:** `test_missing_file` `[GUIDED]` in `learning/m1/test_runner.py` — exact key set, `timed_out=False`, `returncode=2`, empty stdout, filename + `No such file or directory` in stderr. `runner.py` unchanged (no pre-check). Suite 7/7 green (2.67s).
+- **Predictions:** learner expected a raised exception (`ValueError`) and returncode 1; actual: no exception (the executable is `sys.executable`), the child Python exits 2 with its own CLI message. Follow-up: `check=True` → `CalledProcessError`; `FileNotFoundError` only for a missing executable. Both follow-up predictions correct.
+- **Mistake:** ran the experiment by editing `runner.py` in place (`[sys.executable, "missing.py"]`), breaking all 7 tests; restored. Also noticed a weak test (`timed_out == False` only) passed while the engine ran the wrong file.
+- **Next:** M2.1 process groups/orphaned grandchildren (`Popen`, `start_new_session=True`, `os.killpg`).
 
 ### 2026-11-21 — Session 12: timeout boundedness test
 - **Milestone:** M1
