@@ -24,5 +24,13 @@ def test_loop_is_bounded():
     assert elapsed < 2
 
 
-if __name__ == "__main__":
-    test_badbytes_does_not_crash_engine()
+def test_missing_file():
+    result = run_file(Path(__file__).parent / "samples" / "intentionally_fake_path.py")
+    assert result["timed_out"] == False
+    assert (
+        result["returncode"] == 2
+    )  # thrown automatically by python to show an cli/usage error
+    assert result["stdout"] == ""
+    assert "intentionally_fake_path.py" in result["stderr"]
+    assert "No such file or directory" in result["stderr"]
+    assert set(result) == {"returncode", "stdout", "stderr", "timed_out"}
