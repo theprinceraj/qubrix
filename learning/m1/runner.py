@@ -15,7 +15,7 @@ def run_file(path, timeout=ENGINE_TIMEOUT):
         resource.setrlimit(resource.RLIMIT_AS, (256 * 1024 * 1024, 256 * 1024 * 1024))
         resource.setrlimit(resource.RLIMIT_FSIZE, (1024 * 1024, 1024 * 1024))
 
-    resolved_path = Path.resolve(path)
+    resolved_path = Path(path).resolve()
 
     with (
         tempfile.TemporaryDirectory() as tmpdir,
