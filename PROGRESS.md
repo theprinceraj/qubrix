@@ -11,16 +11,18 @@ Attribution labels (`[SOLO]` `[GUIDED]` `[PAIRED]` `[AGENT]`) and skill levels (
 | Field | Value |
 |---|---|
 | Current milestone | **M1 — Local Python execution engine** (started 2026-11-15). F1 ✅ 2026-11-05, F2 ✅ 2026-11-15, F3 folded into M1 |
-| Active task | **M1.3 (TBD, assign next session)** — decide next M1 slice (e.g. missing/unrunnable file behavior as a candidate result, or separating wall-clock timeout concerns). M1.1 ✅, M1.2 ✅ |
+| Active task | **M1.3** — missing/unrunnable file behavior as a candidate result (assign 2026-11-21, awaiting learner implementation). Add `test_missing_file` with predictions first; then basic tests/type hints around `run_file` (F3 folded in). M1.1 ✅, M1.2 ✅ |
 | Parallel task | none. Ubuntu installed and set as default WSL distro (verified) |
-| Last session | 2026-11-16 |
+| Last session | 2026-11-21 |
 | Open decisions | Product definition (draft below) — learner to confirm; weekly time budget unknown |
 
 ## Current assignment
 
 **Pace change 2026-11-15 (learner request: "increase speed"):** one combined task per step instead of many micro-steps; one prediction block per task (not per command); shorter explanations; F2 closes with this task, F3 (venv, type hints, pytest) is folded into M1 just-in-time. Next after `run.sh`: **M1 — Python runner with `subprocess`**.
 
-**Next (M1.3, not yet assigned):** pick the next M1 slice in the next session. Candidates: define/implement behavior for a missing or non-.py path as a *candidate result* (observe `python3`’s own exit/stderr through the normal path, no pre-check), or introduce basic tests/type hints around `run_file` (F3 folded in). Assign with predictions + acceptance criteria before coding.
+**M1.3 assignment 2026-11-21:** add `test_missing_file` to `learning/m1/test_runner.py`: `run_file(<missing path>)` must produce a normal result dict (`returncode`, `stdout`, `stderr`, `timed_out`), no pre-check before `subprocess.run`. Predictions first: does `subprocess.run` raise on a missing script, and which exception? Then implement and run pytest.
+
+**Timeout boundedness test ✅ 2026-11-21** `[GUIDED]`: `test_loop_is_bounded` in `learning/m1/test_runner.py` measures `time.monotonic()` around `run_file(loop.py, timeout=1)` and asserts `timed_out`, `"started"` in stdout, `elapsed < 2`. Full suite 6/6 green (9.03s); loop case: `timed_out=True`, stdout `"started\n"`, elapsed 1.04s. Learner's answer on `time.monotonic()` vs `time.time()` was correct (no epoch reference, immune to clock updates); Python docs confirmed: "a clock that cannot go backwards ... not affected by system clock updates".
 
 **M1.2 ✅ 2026-11-16** `[GUIDED]`: `run_file(path, timeout)` in `learning/m1/runner.py` catches only `subprocess.TimeoutExpired`, returns `returncode/stdout/stderr/timed_out`. Samples added: `learning/m1/samples/loop.py` (`print("started", flush=True); while True: pass`) and `learning/m1/samples/sleep.py`. Timeout path normalizes output to `str` (decodes bytes, empty stream → `""`) so partial stdout (`"started\n"`) is preserved and types match normal runs. `returncode` on timeout set to `124` (engine sentinel, conventional) with `timed_out` as the primary signal. `__main__` runs 5 cases (`crash, ok, three, loop, sleep`) with `timeout=2`; `time` ~4.3s real. Learner implemented; agent reviewed (spec gaps: extra missing-file pre-check, bytes/None on timeout, consistency). Understanding check: broad `except` can hide engine bugs; checking only `returncode==124` can misclassify a program that exits 124. Minor open point: prediction 1 overstated "SIGKILL right away" without a precise doc quote for `subprocess.run` timeout behavior.
 
@@ -117,7 +119,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 | Processes, subprocesses & concurrency | 1 | 2026-11-16 `[GUIDED]`: M1.1/M1.2 used `subprocess.run` with `sys.executable`, `capture_output`, `text`, `check=False`, `timeout`, and handled `TimeoutExpired`. Understood candidate failure vs engine error and why not to catch broadly. Gaps: `Popen`, signals/process groups, async/concurrency not yet touched |
 | Error handling & logging | 2 | 2026-11-04: F1.3c `[GUIDED]`: invariant check with `assert` (not yet seen to fire); knows `python -O` strips asserts (told, not practised). 2026-11-02: F1.3a/b `[GUIDED]`: `try`/`except Exception as e`, `continue`, formatting `type(e).__name__` / `{e}`, telling test errors apart from function errors, why a failed assignment leaves old values behind. 2026-11-05 `[GUIDED]`: `logging` replaces `print`; learner set the INFO/WARNING/ERROR rule (see F1 logging in Assignment history). Open: lazy `%s` formatting |
 | Packaging & dependency management | 0 | Self-report |
-| Testing & debugging | 0 | Self-report |
+| Testing & debugging | 1 | 2026-11-21: wrote assertion-based tests for `run_file` (exit codes, timeout, bad bytes, bounded run); no independent debugging session yet |
 
 ### 2. Linux & systems engineering
 | Skill | Level | Evidence |
@@ -157,7 +159,7 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 ### 5. Testing & AI evaluation
 | Skill | Level | Evidence |
 |---|---|---|
-| Pytest | 0 | Self-report |
+| Pytest | 2 | 2026-11-21 `[GUIDED]`: wrote several pytest test functions with asserts (test_crash, test_exitcode, test_ok, test_runner incl. `test_loop_is_bounded` with a monotonic elapsed bound); ran suite 6/6 green (9.03s). Gaps: fixtures, parametrize, conftest, markers, `-v` reading. |
 | Test case generation | 0 | Self-report |
 | Functional correctness | 0 | Self-report |
 | Benchmark design | 0 | Self-report |
@@ -208,12 +210,20 @@ Baseline set 2026-11-01 from learner self-report (Session 1).
 - **Linux:** owner/other (`u`/`o`) confusion recurred twice (sessions 6, 8); right in session 9. Needs the octal chart for `chmod`. `$?` is per shell and per last command.
 - **Bash:** has written one script (`args.sh`). Not yet: `$?` inside a script, `if`, argument checks, pipes.
 - **Threat model leftovers for M3:** wall-clock vs CPU limit, total disk quota, tests invisible to the submission, in-process tampering.
-- **Not started:** Docker, testing/pytest, type hints, async, subprocess, AI evaluation.
+- **Not started:** Docker, type hints, async, AI evaluation; pytest and subprocess (learner practised plain assert-based tests with guidance).
 - **Product purpose:** learner has not confirmed the draft product definition. F1 is done, so this is due.
 
 ---
 
 ## Session log
+
+### 2026-11-21 — Session 12: timeout boundedness test
+- **Milestone:** M1
+- **Implemented:** `test_loop_is_bounded` `[GUIDED]` in `learning/m1/test_runner.py` — monotonic elapsed bound, `timed_out`, partial stdout. Suite 6/6 green (9.03s); loop case 1.04s.
+- **Concepts:** `time.monotonic()` vs `time.time()` (no epoch, non-decreasing, immune to system clock updates → only differences are meaningful); bounding a timeout promise with a test (2× timeout slack).
+- **Checked:** learner's monotonic answer correct; pytest output pasted.
+- **Found unrecorded:** test_crash/test_exitcode/test_ok, badbytes samples + tests, runner `errors="backslashreplace"` (from a prior unrecorded session; attribution to confirm with learner).
+- **Next:** M1.3 missing-file behavior as a candidate result (`test_missing_file`), predictions first.
 
 ### 2026-11-16 — Session 11: M1.2 timeouts
 - **Milestone:** M1

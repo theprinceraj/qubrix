@@ -13,12 +13,17 @@ def run_file(path, timeout=ENGINE_TIMEOUT):
             capture_output=True,
             text=True,
             timeout=timeout,
+            errors="backslashreplace",
         )
     except subprocess.TimeoutExpired as e:
         return {
             "returncode": 124,
-            "stdout": e.stdout.decode("utf-8") if e.stdout is not None else "",
-            "stderr": e.stderr.decode("utf-8") if e.stderr is not None else "",
+            "stdout": e.stdout.decode("utf-8", errors="backslashreplace")
+            if e.stdout is not None
+            else "",
+            "stderr": e.stderr.decode("utf-8", errors="backslashreplace")
+            if e.stderr is not None
+            else "",
             "timed_out": True,
         }
 
