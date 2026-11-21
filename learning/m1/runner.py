@@ -1,21 +1,35 @@
 import os
+import resource
 import signal
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ENGINE_TIMEOUT = 5
 
 
 def run_file(path, timeout=ENGINE_TIMEOUT):
-    with subprocess.Popen(
-        [sys.executable, path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        errors="backslashreplace",
-        start_new_session=True,
-    ) as p:
+    def set_child_limits():
+        resource.setrlimit(resource.RLIMIT_CPU, (1, 2))
+        resource.setrlimit(resource.RLIMIT_AS, (256 * 1024 * 1024, 256 * 1024 * 1024))
+        resource.setrlimit(resource.RLIMIT_FSIZE, (1024 * 1024, 1024 * 1024))
+
+    resolved_path = Path.resolve(path)
+
+    with (
+        tempfile.TemporaryDirectory() as tmpdir,
+        subprocess.Popen(
+            [sys.executable, resolved_path],
+            cwd=tmpdir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            errors="backslashreplace",
+            start_new_session=True,
+            preexec_fn=set_child_limits,
+        ) as p,
+    ):
         try:
             out, err = p.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
